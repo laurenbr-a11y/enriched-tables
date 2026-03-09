@@ -193,50 +193,49 @@ function TemplatesScreen({ onNext, onBack }) {
   ]
 
   return (
-    <div className="overlay" style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-lg templates-modal">
-        <div className="modal-header-row">
-          <button className="modal-close" onClick={onBack}>✕</button>
+    <div className="fullpage-screen">
+      <div className="fullpage-topbar">
+        <MiroLogo />
+        <button className="modal-close" onClick={onBack}>✕</button>
+      </div>
+      <div className="templates-layout">
+        <div className="templates-sidebar">
+          {categories.map(c => (
+            <div key={c} className={`tcat ${c === 'Miro Templates' ? 'active' : ''}`}>{c}</div>
+          ))}
+          <div className="tcat-section">BY USE CASE</div>
+          {useCases.map(c => <div key={c} className="tcat">{c}</div>)}
+          <div className="tcat-section">CUSTOM TEMPLATES</div>
+          {custom.map(c => <div key={c} className="tcat">{c}</div>)}
         </div>
-        <div className="templates-layout">
-          <div className="templates-sidebar">
-            {categories.map(c => (
-              <div key={c} className={`tcat ${c === 'Miro Templates' ? 'active' : ''}`}>{c}</div>
-            ))}
-            <div className="tcat-section">BY USE CASE</div>
-            {useCases.map(c => <div key={c} className="tcat">{c}</div>)}
-            <div className="tcat-section">CUSTOM TEMPLATES</div>
-            {custom.map(c => <div key={c} className="tcat">{c}</div>)}
-          </div>
-          <div className="templates-content">
-            <div className="templates-content-header">
-              <div>
-                <h3 className="templates-title">Miro Templates</h3>
-                <p className="templates-sub">Ensure consistency with using templates created especially for your company.</p>
-              </div>
-              <label className="checkbox-label">
-                <input type="checkbox" defaultChecked /> Show when creating a board
-              </label>
+        <div className="templates-content">
+          <div className="templates-content-header">
+            <div>
+              <h3 className="templates-title">Miro Templates</h3>
+              <p className="templates-sub">Ensure consistency with using templates created especially for your company.</p>
             </div>
-            <div className="templates-grid">
-              {featured.map(t => (
-                <div key={t.name} className="template-card" onClick={t.name === 'Product Roadmap' ? onNext : undefined}>
-                  <div className="template-preview" style={{ background: t.color }}>
-                    <span className="blueprint-tag">Blueprint</span>
-                    <div className="template-preview-grid">
-                      {[...Array(9)].map((_, i) => <div key={i} className="preview-cell" />)}
-                    </div>
-                  </div>
-                  <div className="template-card-footer">
-                    <div className="miro-m">M</div>
-                    <div>
-                      <div className="template-provider">Miro</div>
-                      <div className="template-name">{t.name}</div>
-                    </div>
+            <label className="checkbox-label">
+              <input type="checkbox" defaultChecked /> Show when creating a board
+            </label>
+          </div>
+          <div className="templates-grid">
+            {featured.map(t => (
+              <div key={t.name} className="template-card" onClick={t.name === 'Product Roadmap' ? onNext : undefined}>
+                <div className="template-preview" style={{ background: t.color }}>
+                  <span className="blueprint-tag">Blueprint</span>
+                  <div className="template-preview-grid">
+                    {[...Array(9)].map((_, i) => <div key={i} className="preview-cell" />)}
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="template-card-footer">
+                  <div className="miro-m">M</div>
+                  <div>
+                    <div className="template-provider">Miro</div>
+                    <div className="template-name">{t.name}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -249,13 +248,13 @@ function BlueprintDetail({ onNext, onBack }) {
   const boards = ['How it works', 'Backlog', 'Roadmap', 'AI Suggestions', 'Ideas']
   const icons = ['ℹ', '▤', '↔', '✦', '💬']
   return (
-    <div className="overlay" style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div className="modal-lg blueprint-modal">
-        <div className="blueprint-modal-header">
-          <button className="btn-text" onClick={onBack}>← Back to Templates</button>
-          <button className="btn-text">🔗 Copy link to share</button>
-          <button className="modal-close" onClick={onBack}>✕</button>
-        </div>
+    <div className="fullpage-screen">
+      <div className="fullpage-topbar">
+        <button className="btn-text" onClick={onBack}>← Back to Templates</button>
+        <button className="btn-text">🔗 Copy link to share</button>
+        <button className="modal-close" onClick={onBack}>✕</button>
+      </div>
+      <div className="blueprint-page-body">
         <div className="blueprint-body">
           <div className="blueprint-left">
             <h2 className="blueprint-title">Product Roadmap</h2>

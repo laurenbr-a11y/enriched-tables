@@ -1,6 +1,12 @@
 /* ── Root ────────────────────────────────────────────────── */
 .app { height: 100vh; overflow: hidden; }
 
+/* ── Full-page screens (templates, blueprint) ────────────── */
+.fullpage-screen { height: 100vh; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+.fullpage-topbar { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid #e8e8e8; flex-shrink: 0; background: #fff; }
+.fullpage-screen .templates-layout { flex: 1; overflow: hidden; }
+.blueprint-page-body { flex: 1; overflow-y: auto; }
+
 /* ── Topbar ──────────────────────────────────────────────── */
 .topbar {
   height: 48px;
