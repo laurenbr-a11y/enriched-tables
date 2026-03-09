@@ -48,11 +48,21 @@
 .toolbar-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; font-size: 15px; color: #555; position: relative; }
 .toolbar-icon:hover { background: #f5f5f5; }
 
-/* ── Import dropdown ──────────────────────────────────────── */
+/* ── Import dropdown (legacy) ─────────────────────────────── */
 .import-dropdown { position: absolute; top: 34px; left: 0; z-index: 100; background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.12); min-width: 160px; overflow: hidden; }
 .import-option { padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; }
-.import-option:hover { background: #fff; }
+.import-option:hover { background: #f5f5f5; }
 .import-dot { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+
+/* ── Import dropdown v2 ───────────────────────────────────── */
+.import-dropdown-v2 { position: absolute; top: 34px; left: 0; z-index: 100; background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.14); min-width: 200px; overflow: hidden; padding: 6px 0; }
+.import-option-v2 { display: flex; align-items: center; gap: 14px; padding: 14px 20px; cursor: pointer; font-size: 16px; font-weight: 500; color: #1a1a2e; }
+.import-option-v2:hover { background: #f5f5f5; }
+.import-icon-v2 { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.import-label-v2 { font-size: 16px; font-weight: 500; color: #1a1a2e; }
+.csv-option { border-top: 1px solid #f0f0f0; background: #fafafa; }
+.csv-option:hover { background: #f0f0f0; }
+.import-divider { display: none; }
 
 /* ── Backlog table ─────────────────────────────────────────── */
 .backlog-table-wrap { flex: 1; overflow: auto; }

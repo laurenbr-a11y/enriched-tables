@@ -323,19 +323,27 @@ function BacklogEmpty({ onNext }) {
             <span className="toolbar-icon" style={{ position: 'relative' }} onClick={() => setShowImportMenu(v => !v)}>
               🔗
               {showImportMenu && (
-                <div className="import-dropdown">
-                  {[
-                    { name: 'Jira', color: '#0052CC' },
-                    { name: 'Azure', color: '#0078D4' },
-                    { name: 'Asana', color: '#F06A6A' },
-                    { name: 'Trello', color: '#0052CC' },
-                    { name: 'Upload .CSV', color: '#555' },
-                  ].map(item => (
-                    <div key={item.name} className="import-option" onClick={onNext}>
-                      <span className="import-dot" style={{ background: item.color }} />
-                      {item.name}
+                <div className="import-dropdown-v2">
+                  <div className="import-option-v2" onClick={onNext}>
+                    <div className="import-icon-v2 jira-icon">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect width="20" height="20" rx="4" fill="#0052CC"/>
+                        <path d="M10 3.5L6 10l4 6.5L14 10 10 3.5z" fill="#fff" opacity=".9"/>
+                        <path d="M10 3.5L6 10h8L10 3.5z" fill="#fff"/>
+                      </svg>
                     </div>
-                  ))}
+                    <span className="import-label-v2">Jira</span>
+                  </div>
+                  <div className="import-divider" />
+                  <div className="import-option-v2 csv-option" onClick={onNext}>
+                    <div className="import-icon-v2 csv-icon">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect width="20" height="20" rx="4" fill="#f0f0f0"/>
+                        <path d="M5 7h10M5 10h10M5 13h6" stroke="#555" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <span className="import-label-v2">Upload .CSV</span>
+                  </div>
                 </div>
               )}
             </span>
@@ -820,21 +828,49 @@ function FeedbackFilter({ filters, onChange }) {
           {view === 'others' && (
             <>
               <div className="fb-filter-back" onClick={() => setView('main')}>‹ Other</div>
-              <div className="fb-other-section-label">Call participant</div>
+              {[
+                { label: 'Call participant', sub: 'others-cp', prefix: 'cp:' },
+                { label: 'Segment',          sub: 'others-seg', prefix: 'seg:' },
+                { label: 'Interview cycle',  sub: 'others-ic', prefix: 'ic:' },
+              ].map(f => {
+                const count = [...filters.others].filter(o => o.startsWith(f.prefix)).length
+                return (
+                  <div key={f.sub} className="fb-filter-row" onClick={() => setView(f.sub)}>
+                    <span>{f.label}</span>
+                    <div className="fb-filter-row-right">
+                      {count > 0 && <span className="fb-filter-active-count">{count}</span>}
+                      <span className="fb-chevron">›</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </>
+          )}
+          {view === 'others-cp' && (
+            <>
+              <div className="fb-filter-back" onClick={() => setView('others')}>‹ Call participant</div>
               {FB_CALL_PARTS.map(p => (
                 <label key={p} className="fb-filter-check">
                   <input type="checkbox" checked={filters.others.has('cp:'+p)} onChange={() => toggle('others', 'cp:'+p)} />
                   {p}
                 </label>
               ))}
-              <div className="fb-other-section-label" style={{marginTop:8}}>Segment</div>
-              {FB_SEGMENTS.map(seg => (
+            </>
+          )}
+          {view === 'others-seg' && (
+            <>
+              <div className="fb-filter-back" onClick={() => setView('others')}>‹ Segment</div>
+              {['Enterprise','Mid-market','SMB'].map(seg => (
                 <label key={seg} className="fb-filter-check">
                   <input type="checkbox" checked={filters.others.has('seg:'+seg)} onChange={() => toggle('others', 'seg:'+seg)} />
                   {seg}
                 </label>
               ))}
-              <div className="fb-other-section-label" style={{marginTop:8}}>Interview cycle</div>
+            </>
+          )}
+          {view === 'others-ic' && (
+            <>
+              <div className="fb-filter-back" onClick={() => setView('others')}>‹ Interview cycle</div>
               {FB_INTERVIEW_CYCLES.map(ic => (
                 <label key={ic} className="fb-filter-check">
                   <input type="checkbox" checked={filters.others.has('ic:'+ic)} onChange={() => toggle('others', 'ic:'+ic)} />
