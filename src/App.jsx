@@ -102,7 +102,15 @@ function HomeScreen({ onNext }) {
     { icon: '💬', name: 'Insights-Driven Roadmapping Evolution', mod: 'Yesterday', space: '', owner: 'Lauren Brucato', badge: 'Internal' },
     { icon: '📊', name: 'Metrics Dashboard', mod: 'Jan 31', space: 'Roadmap Tracki…', owner: 'Holly Rankin', badge: 'Internal' },
   ]
-  const templates = ['AI Playground', 'Project Workspace', 'UX Research Project', 'Crazy Eights', 'Research Insight Sy…', 'Prototype']
+  const templates = [
+    { label: 'Product Roadmap', blueprint: true, clickable: true },
+    { label: 'AI Playground', blueprint: false },
+    { label: 'Project Workspace', blueprint: true },
+    { label: 'UX Research Project', blueprint: true },
+    { label: 'Crazy Eights', blueprint: false },
+    { label: 'Research Insight Sy…', blueprint: true },
+    { label: 'Prototype', blueprint: false },
+  ]
 
   return (
     <div className="home-screen">
@@ -124,13 +132,16 @@ function HomeScreen({ onNext }) {
         <div className="templates-row">
           <div className="templates-row-header">Templates for Design ▾</div>
           <div className="template-chips">
-            <div className="template-chip new">+</div>
+            <div className="template-chip new"><div className="template-thumb new-thumb">+</div><span>Blank board</span></div>
             {templates.map(t => (
-              <div key={t} className="template-chip" onClick={t === 'Project Workspace' ? onNext : undefined} style={t === 'Project Workspace' ? { cursor: 'pointer' } : {}}>
+              <div key={t.label} className="template-chip" onClick={t.clickable ? onNext : undefined} style={t.clickable ? { cursor: 'pointer' } : {}}>
                 <div className="template-thumb">
-                  <div className="blueprint-badge">Blueprint</div>
+                  {t.blueprint && <div className="blueprint-badge">Blueprint</div>}
+                  <div className="thumb-grid">
+                    {[...Array(6)].map((_, i) => <div key={i} className="thumb-cell" />)}
+                  </div>
                 </div>
-                <span>{t}</span>
+                <span>{t.label}</span>
               </div>
             ))}
           </div>
