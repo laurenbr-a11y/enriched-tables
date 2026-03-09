@@ -311,3 +311,54 @@
 .sp-quote { font-size: 13px; color: #333; line-height: 1.55; background: #fff8f0; border-left: 3px solid #F5A623; padding: 8px 10px; border-radius: 4px; margin-bottom: 8px; }
 .sp-author { font-size: 12px; font-weight: 600; color: #333; }
 .sp-date { font-size: 11px; color: #999; }
+
+/* ── Feedback filter ─────────────────────────────────────── */
+.sp-feedback-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.sp-fb-count { font-size: 12px; font-weight: 400; color: #888; margin-left: 4px; }
+.sp-feedback-controls { display: flex; align-items: center; gap: 6px; }
+.sp-sort-select-wrap { position: relative; }
+.sp-sort-select { border: 1px solid #ddd; border-radius: 6px; padding: 5px 24px 5px 8px; font-size: 12px; appearance: none; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E") no-repeat right 6px center; cursor: pointer; color: #444; }
+.fb-filter-wrap { position: relative; }
+.fb-filter-btn { display: flex; align-items: center; gap: 4px; padding: 5px 8px; border: 1px solid #ddd; border-radius: 6px; color: #555; cursor: pointer; font-size: 12px; background: #fff; }
+.fb-filter-btn.active { background: #EEF0FF; border-color: #4262FF; color: #4262FF; }
+.fb-filter-btn:hover { background: #f5f5f5; }
+.fb-filter-badge { background: #4262FF; color: #fff; font-size: 10px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.fb-filter-dropdown { position: absolute; top: calc(100% + 4px); right: 0; z-index: 300; background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.14); width: 220px; padding: 6px 0; }
+.fb-filter-heading { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; padding: 6px 14px 4px; letter-spacing: 0.5px; }
+.fb-filter-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; font-size: 13px; cursor: pointer; color: #333; }
+.fb-filter-row:hover { background: #f5f5f5; }
+.fb-filter-row-right { display: flex; align-items: center; gap: 6px; }
+.fb-filter-active-count { background: #4262FF; color: #fff; font-size: 10px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+.fb-chevron { color: #aaa; font-size: 16px; }
+.fb-filter-back { padding: 8px 14px; font-size: 13px; font-weight: 600; color: #4262FF; cursor: pointer; border-bottom: 1px solid #f0f0f0; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+.fb-filter-back:hover { background: #f5f5f5; }
+.fb-filter-check { display: flex; align-items: center; gap: 8px; padding: 7px 14px; font-size: 13px; color: #333; cursor: pointer; }
+.fb-filter-check:hover { background: #f5f5f5; }
+.fb-filter-check input { cursor: pointer; accent-color: #4262FF; }
+.fb-company-search { display: block; width: calc(100% - 28px); margin: 4px 14px 6px; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; outline: none; }
+.fb-company-search:focus { border-color: #4262FF; }
+.fb-company-list { max-height: 200px; overflow-y: auto; }
+.fb-other-section-label { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; padding: 6px 14px 2px; letter-spacing: 0.5px; }
+.fb-clear-btn { display: block; width: calc(100% - 28px); margin: 6px 14px 4px; padding: 7px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; color: #666; cursor: pointer; background: #fff; text-align: center; }
+.fb-clear-btn:hover { background: #f5f5f5; }
+
+/* Active filter chips */
+.sp-active-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.sp-filter-chip { display: flex; align-items: center; gap: 4px; background: #EEF0FF; color: #4262FF; font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 12px; }
+.sp-filter-chip button { background: none; color: #4262FF; font-size: 11px; cursor: pointer; padding: 0; line-height: 1; }
+
+/* Updated feedback cards */
+.sp-feedback-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left-width: 3px; }
+.sp-card-problem { border-left-color: #FF6B6B; background: #FFFAFA; }
+.sp-card-request { border-left-color: #FFB800; background: #FFFDF5; }
+.sp-card-praise { border-left-color: #34C759; background: #F5FFF8; }
+.sp-feedback-type { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; }
+.sp-type-problem { background: #FFE8E8; color: #C00; }
+.sp-type-request { background: #FFF3CC; color: #8A5C00; }
+.sp-type-praise { background: #E3F9E5; color: #1A7A3C; }
+.sp-author-row { font-size: 12px; color: #555; margin-bottom: 8px; }
+.sp-card-footer { display: flex; flex-wrap: wrap; gap: 5px; }
+.sp-card-tag { font-size: 11px; color: #666; background: #f0f0f0; padding: 2px 7px; border-radius: 10px; }
+.sp-tag-source { background: #EEF0FF; color: #4262FF; }
+.sp-fb-empty { color: #aaa; font-size: 13px; text-align: center; padding: 24px 0; }
+.sp-quote { font-size: 13px; color: #333; line-height: 1.55; padding: 8px 0; margin-bottom: 4px; font-style: italic; }

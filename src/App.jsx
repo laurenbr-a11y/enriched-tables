@@ -588,158 +588,136 @@ function EnrichedTable({ onRestart }) {
   )
 }
 
+// ── Feedback data generation ─────────────────────────────────
+const FB_AUTHORS = [
+  ['John Butter','ProductHunt'],['Sarah Kim','Stripe'],['Marcus Lee','Figma'],['Priya Patel','Notion'],
+  ['Dan Rowe','Linear'],['Tara Singh','Vercel'],['Leo Chen','Loom'],['Anna Flores','Canva'],
+  ['Chris Walton','GitHub'],['Maya Johansson','Slack'],['Ben Carter','Dropbox'],['Sophie Turner','Zapier'],
+  ['Tom Nakamura','Intercom'],['Isla Brooks','HubSpot'],['Carlos Vega','Salesforce'],['Wei Zhang','Atlassian'],
+  ['Fatima Al-Hassan','Meta'],['Ryan Park','Apple'],['Elena Morozova','Google'],['James O\'Brien','Zendesk'],
+  ['Nadia Kowalski','Asana'],['David Osei','Retool'],['Chloe Martin','Monday'],['Arjun Sharma','GitLab'],
+  ['Mei Lin','Postman'],['Lucas Müller','Basecamp'],['Aisha Diallo','Trello'],['Oliver Smith','1Password'],
+  ['Nina Johansson','Miro'],['Kwame Mensah','Alpha Industries'],
+]
+const FB_QUOTES_PROBLEM = [
+  '"The app technically works, but every tap feels like it\'s thinking hard before responding."',
+  '"Login takes 8+ seconds on mobile. We\'ve had users abandon signup entirely."',
+  '"Session timeouts are too aggressive — users are getting logged out mid-work."',
+  '"The search results take forever to load. Unusable on 4G connections."',
+  '"Notifications are delayed by hours sometimes. Critical for our team workflows."',
+  '"We can\'t pass our SOC2 audit without audit logs. This is blocking our enterprise deal."',
+  '"First-time login was confusing — no indication of what step I was on."',
+  '"Your password rules rejected my password manager\'s generated password. Absurd."',
+  '"Lost access to my account when my phone broke — backup codes weren\'t explained."',
+  '"Got locked out with no way to recover without contacting support. Took 2 days."',
+  '"The import job silently failed with no error message. We lost 3 hours of work."',
+  '"Bulk operations freeze the UI entirely. Need background processing for large datasets."',
+  '"The mobile experience is an afterthought. Key features are buried 5 taps deep."',
+  '"Export to CSV corrupts special characters. Our data team has raised this repeatedly."',
+  '"The date picker doesn\'t support timezones. International teams are constantly confused."',
+  '"Auto-save stops working after 20 minutes. Lost a week of configuration changes."',
+  '"Keyboard shortcuts are undocumented and inconsistent across different sections."',
+  '"The onboarding wizard skips enterprise SSO setup entirely — a major oversight."',
+  '"Dashboard widgets don\'t load in Firefox. We have a significant Firefox user base."',
+  '"Webhook delivery fails silently when our endpoint is temporarily unavailable."',
+  '"The API rate limits are too low for our automation use case. No burst allowance."',
+  '"Comments disappear after editing. We\'ve lost critical stakeholder feedback."',
+  '"The filter state resets on page reload. Extremely frustrating for daily users."',
+  '"Integrations break whenever you push updates. No versioning or deprecation notice."',
+  '"The mobile app crashes when switching between large projects on low-memory devices."',
+]
+const FB_QUOTES_REQUEST = [
+  '"Would love SSO support — our team logs in 10+ times a day and it\'s painful."',
+  '"Please add Google/GitHub OAuth. Manual registration feels outdated."',
+  '"We need SAML SSO before we can roll this out company-wide. It\'s a blocker."',
+  '"Competitors offer Face ID login. Would love to see that here too."',
+  '"We need scoped API keys before we can recommend this to our clients."',
+  '"I want to pin my most-used views to the top. Navigation takes too many clicks."',
+  '"Would love a Slack integration — we\'d never miss an update if alerts came there."',
+  '"Dark mode would make a huge difference for our late-night on-call engineers."',
+  '"Can we get a read-only share link? Great for sharing progress with external stakeholders."',
+  '"Bulk editing rows would save us hours every week. We manage hundreds of items."',
+  '"An audit log for admin actions is critical for our compliance requirements."',
+  '"Would love to see Kanban and Gantt views — the table is great but we need more."',
+  '"Conditional formatting on cells would help our team spot issues at a glance."',
+  '"Please add support for custom fields — we need to track data unique to our workflow."',
+  '"A mobile app would be a game-changer. Our field team can\'t use the web version easily."',
+  '"We\'d love an API for reading table data — would save us building manual exports."',
+  '"Two-way Jira sync would eliminate the duplicate data entry our team does daily."',
+  '"Add support for @mentions in comments — we\'re constantly missing important threads."',
+  '"Would love to set row-level permissions. Some data shouldn\'t be visible to all teammates."',
+  '"Zapier integration would open up a huge number of automation possibilities for us."',
+  '"Please add recurring task support. We have the same standup items every week."',
+  '"A changelog or activity feed per row would help us track the history of each item."',
+  '"Guest access with limited permissions would let us loop in external partners."',
+  '"Inline formula support (like SUM, AVERAGE) would replace a lot of our spreadsheet work."',
+  '"Video walkthrough support in cards would help our support team document solutions."',
+]
+const FB_QUOTES_PRAISE = [
+  '"The new table view is exactly what we needed. Migrated our whole team off Notion."',
+  '"Import from Jira worked flawlessly. Saved us a full day of manual work."',
+  '"The enrichment with customer data is genuinely game-changing for prioritization."',
+  '"Best onboarding I\'ve experienced for a B2B tool. Everything just clicked."',
+  '"The speed improvements in the last release are noticeable. Great engineering."',
+  '"Our entire product team lives in this now. The visibility it gives us is unmatched."',
+  '"The insights panel alone justifies the price. We cancelled two other tools."',
+  '"Incredibly fast for large datasets. Handles our 10k-row backlog without breaking a sweat."',
+  '"The collaboration features are top-notch. Real-time editing is seamless."',
+  '"The customer company data surfacing is brilliant. Prioritized 3 features immediately."',
+]
+const FB_SOURCES = ['Call','Call','Call','Ticket','Ticket','Message','Other']
+const FB_ROLES = ['Product Manager','Product Manager','Engineer','Designer','Executive','Customer Success','Sales']
+const FB_SEGMENTS = ['Enterprise','Enterprise','Mid-market','Mid-market','SMB']
+const FB_CALL_PARTS = ['Zach Brown','Emily Johnson','Sarah Kim','Marcus Lee','Brent Taylor']
+const FB_INTERVIEW_CYCLES = ['Q1 2025','Q2 2025','Q3 2025','Q4 2024']
+const FB_DATES = ['1 week ago','2 weeks ago','3 weeks ago','1 month ago','6 weeks ago','2 months ago','3 months ago','4 months ago']
+
+function pick(arr, n) { return arr[n % arr.length] }
+function seededInt(seed, max) { return ((seed * 1664525 + 1013904223) & 0x7fffffff) % max }
+
+function generateFeedback(rowSeed, count = 50) {
+  const items = []
+  for (let i = 0; i < count; i++) {
+    const s = rowSeed * 100 + i
+    const typeRoll = seededInt(s, 10)
+    const type = typeRoll < 4 ? 'Problem' : typeRoll < 7 ? 'Request' : 'Praise'
+    const quotes = type === 'Problem' ? FB_QUOTES_PROBLEM : type === 'Request' ? FB_QUOTES_REQUEST : FB_QUOTES_PRAISE
+    const [author, company] = FB_AUTHORS[(s * 7 + i * 3) % FB_AUTHORS.length]
+    items.push({
+      type,
+      stars: type === 'Problem' ? (seededInt(s+1, 3) + 1) : type === 'Praise' ? (seededInt(s+2, 2) + 4) : (seededInt(s+3, 3) + 2),
+      quote: quotes[seededInt(s+4, quotes.length)],
+      author,
+      company,
+      date: FB_DATES[seededInt(s+5, FB_DATES.length)],
+      source: FB_SOURCES[seededInt(s+6, FB_SOURCES.length)],
+      role: FB_ROLES[seededInt(s+7, FB_ROLES.length)],
+      segment: FB_SEGMENTS[seededInt(s+8, FB_SEGMENTS.length)],
+      callParticipant: FB_CALL_PARTS[seededInt(s+9, FB_CALL_PARTS.length)],
+      interviewCycle: FB_INTERVIEW_CYCLES[seededInt(s+10, FB_INTERVIEW_CYCLES.length)],
+    })
+  }
+  return items
+}
+
 // ── Shared enriched table view ───────────────────────────────
 const tableRows = [
-  {
-    summary: 'Log in to the application, I need a user-…',
-    fullTitle: 'Design the user interface for the login page.',
-    status: 'To do', priority: 'High', assignee: 'Emily Joh…', assigner: 'Brent Tay…',
-    mentions: 47, customers: 31, revenue: '$2.1M', companies: 'Stripe, Figma, +12',
-    panelMentions: 135, panelCustomers: 10, panelRevenue: '$325K',
-    panelCompanies: ['Apple', 'Google', 'Notion', '+2'],
-    panelSummary: 'Customers want a faster, more modern mobile experience — especially a simpler checkout. Improving this flow is strongly supported across segments and could boost mobile conversion and reduce churn.',
-    feedback: [
-      { type: 'Problem', stars: 2, quote: '"The app technically works, but every tap feels like it\'s thinking hard before responding."', author: 'John Butter', date: '1 month ago' },
-      { type: 'Problem', stars: 1, quote: '"Login takes 8+ seconds on mobile. We\'ve had users abandon signup entirely."', author: 'Sarah Kim', date: '3 weeks ago' },
-      { type: 'Request', stars: 4, quote: '"Would love SSO support — our team logs in 10+ times a day and it\'s painful."', author: 'Marcus Lee', date: '2 weeks ago' },
-    ],
-  },
-  {
-    summary: 'Registering for an account, I need clear wir…',
-    fullTitle: 'Create wireframes for the registration process.',
-    status: 'To do', priority: 'High', assignee: 'Sophia W…', assigner: 'Brent Tay…',
-    mentions: 38, customers: 24, revenue: '$1.8M', companies: 'Notion, Slack, +9',
-    panelMentions: 98, panelCustomers: 14, panelRevenue: '$210K',
-    panelCompanies: ['Figma', 'Linear', 'Vercel', '+3'],
-    panelSummary: 'Registration friction is causing significant drop-off for enterprise accounts. Users report confusion at the team invite step and struggle with email verification delays.',
-    feedback: [
-      { type: 'Problem', stars: 2, quote: '"We lost 3 teammates during onboarding because the invite email never arrived."', author: 'Priya Patel', date: '2 months ago' },
-      { type: 'Request', stars: 3, quote: '"Please add Google/GitHub OAuth. Manual registration feels outdated."', author: 'Dan Rowe', date: '5 weeks ago' },
-    ],
-  },
-  {
-    summary: 'Reset password, I need a user flow diagra…',
-    fullTitle: 'Develop a user flow diagram for account recovery.',
-    status: 'To do', priority: 'High', assignee: 'Olivia Br…', assigner: 'Brent Tay…',
-    mentions: 29, customers: 18, revenue: '$980K', companies: 'Linear, Vercel, +7',
-    panelMentions: 72, panelCustomers: 8, panelRevenue: '$180K',
-    panelCompanies: ['Stripe', 'Intercom', '+4'],
-    panelSummary: 'Password reset is a consistent pain point. Users report the reset link expiring too quickly and confusion about which email address is associated with their account.',
-    feedback: [
-      { type: 'Problem', stars: 1, quote: '"Reset link expired before I could use it. Had to request 4 times."', author: 'Tara Singh', date: '1 month ago' },
-      { type: 'Problem', stars: 2, quote: '"No indication of which email the link was sent to. Very confusing."', author: 'Leo Chen', date: '3 weeks ago' },
-    ],
-  },
-  {
-    summary: 'Developing features for authentication, I n…',
-    fullTitle: 'Write user stories for the authentication feature.',
-    status: 'To do', priority: 'High', assignee: 'Ava Davis', assigner: 'Brent Tay…',
-    mentions: 22, customers: 15, revenue: '$740K', companies: 'Loom, Canva, +5',
-    panelMentions: 55, panelCustomers: 7, panelRevenue: '$140K',
-    panelCompanies: ['Loom', 'Canva', '+3'],
-    panelSummary: 'Enterprise customers are pushing for MFA and SAML SSO. Several deals are stalled pending these auth capabilities, particularly in the financial services segment.',
-    feedback: [
-      { type: 'Request', stars: 4, quote: '"We need SAML SSO before we can roll this out company-wide. It\'s a blocker."', author: 'James O\'Brien', date: '6 weeks ago' },
-      { type: 'Problem', stars: 2, quote: '"Session timeouts are too aggressive — users are getting logged out mid-work."', author: 'Nadia Kowalski', date: '1 month ago' },
-    ],
-  },
-  {
-    summary: 'Authentication methods, I need to co…',
-    fullTitle: 'Conduct a competitive analysis of authentication methods.',
-    status: 'To do', priority: 'High', assignee: 'Ryan Eldr…', assigner: 'Brent Tay…',
-    mentions: 18, customers: 11, revenue: '$620K', companies: 'Miro, Asana, +4',
-    panelMentions: 44, panelCustomers: 6, panelRevenue: '$115K',
-    panelCompanies: ['Asana', 'Monday', '+2'],
-    panelSummary: 'Customers frequently compare auth options to competitors. Passkeys and biometric login are emerging requests, especially from mobile-first teams.',
-    feedback: [
-      { type: 'Request', stars: 5, quote: '"Competitors offer Face ID login. Would love to see that here too."', author: 'Anna Flores', date: '2 weeks ago' },
-    ],
-  },
-  {
-    summary: 'Discuss security, I want to set up a me…',
-    fullTitle: 'Set up a meeting to discuss security protocols.',
-    status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…',
-    mentions: 14, customers: 9, revenue: '$410K', companies: 'Jira, GitHub, +3',
-    panelMentions: 32, panelCustomers: 5, panelRevenue: '$90K',
-    panelCompanies: ['GitHub', 'GitLab', '+1'],
-    panelSummary: 'Security audit requirements are driving requests for detailed logs, IP allowlisting, and admin controls. Enterprise IT teams want more visibility into user activity.',
-    feedback: [
-      { type: 'Problem', stars: 2, quote: '"We can\'t pass our SOC2 audit without audit logs. This is urgent for us."', author: 'Chris Walton', date: '3 months ago' },
-    ],
-  },
-  {
-    summary: 'For user testing, I need to draft a plan…',
-    fullTitle: 'Draft a plan for user testing the authentication process.',
-    status: 'To do', priority: 'Medium', assignee: 'Sophia W…', assigner: 'Chance C…',
-    mentions: 11, customers: 7, revenue: '$290K', companies: 'Trello, Basecamp',
-    panelMentions: 28, panelCustomers: 4, panelRevenue: '$75K',
-    panelCompanies: ['Trello', 'Basecamp'],
-    panelSummary: 'Usability testing reveals users struggle with the authentication flow on first use. Clear progress indicators and inline error messages would significantly reduce support tickets.',
-    feedback: [
-      { type: 'Problem', stars: 3, quote: '"First-time login was confusing — no indication of what step I was on."', author: 'Maya Johansson', date: '2 months ago' },
-    ],
-  },
-  {
-    summary: 'Passwords, I want to research best pr…',
-    fullTitle: 'Research best practices for password management.',
-    status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…',
-    mentions: 9, customers: 6, revenue: '$220K', companies: 'Dropbox, +2',
-    panelMentions: 22, panelCustomers: 4, panelRevenue: '$60K',
-    panelCompanies: ['Dropbox', '1Password', '+1'],
-    panelSummary: 'Password complexity rules are frustrating users. Many request a password strength meter and support for password manager autofill, which currently breaks in some browsers.',
-    feedback: [
-      { type: 'Problem', stars: 2, quote: '"Your password rules rejected my password manager\'s generated password. Absurd."', author: 'Ben Carter', date: '5 weeks ago' },
-    ],
-  },
-  {
-    summary: 'APIs, I need to create a checklist so…',
-    fullTitle: 'Create a checklist for API documentation.',
-    status: 'To do', priority: 'Medium', assignee: 'Ava Davis', assigner: 'Chance C…',
-    mentions: 8, customers: 5, revenue: '$190K', companies: 'Zapier, +1',
-    panelMentions: 19, panelCustomers: 3, panelRevenue: '$50K',
-    panelCompanies: ['Zapier', 'Make'],
-    panelSummary: 'API key management is lacking — developers want scoped tokens, rotation policies, and usage dashboards. Several integration partners have flagged this as a blocker.',
-    feedback: [
-      { type: 'Request', stars: 4, quote: '"We need scoped API keys before we can recommend this to our clients."', author: 'Sophie Turner', date: '1 month ago' },
-    ],
-  },
-  {
-    summary: 'Security features, I need to outline…',
-    fullTitle: 'Outline the requirements for multi-factor authentication.',
-    status: 'To do', priority: 'Medium', assignee: 'Ryan Eldr…', assigner: 'Chance C…',
-    mentions: 6, customers: 4, revenue: '$130K', companies: 'Postman',
-    panelMentions: 15, panelCustomers: 3, panelRevenue: '$40K',
-    panelCompanies: ['Postman', 'Insomnia'],
-    panelSummary: 'MFA adoption is low because the current TOTP setup is cumbersome. Users want push notification MFA and backup codes that are easier to manage.',
-    feedback: [
-      { type: 'Problem', stars: 2, quote: '"Lost access to my account when my phone broke — backup codes weren\'t clear."', author: 'Tom Nakamura', date: '2 months ago' },
-    ],
-  },
-  {
-    summary: 'The user dashboard, I need to develop…',
-    fullTitle: 'Develop a prototype for the user dashboard.',
-    status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…',
-    mentions: 5, customers: 3, revenue: '$95K', companies: 'Retool',
-    panelMentions: 12, panelCustomers: 2, panelRevenue: '$30K',
-    panelCompanies: ['Retool'],
-    panelSummary: 'The user dashboard lacks the quick-access shortcuts and activity feed that power users rely on. Customers request a customizable home screen with pinned items.',
-    feedback: [
-      { type: 'Request', stars: 4, quote: '"I want to pin my most-used views to the top. Navigation takes too many clicks."', author: 'Isla Brooks', date: '3 weeks ago' },
-    ],
-  },
-  {
-    summary: 'Support staff, I need to create a guide on…',
-    fullTitle: 'Compile feedback from stakeholders on the authentication experience.',
-    status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…',
-    mentions: 4, customers: 3, revenue: '$80K', companies: 'Intercom',
-    panelMentions: 10, panelCustomers: 2, panelRevenue: '$25K',
-    panelCompanies: ['Intercom'],
-    panelSummary: 'Support volume around authentication has increased 40% QoQ. Most tickets relate to locked accounts and session management confusion. A self-service unlock flow would reduce load.',
-    feedback: [
-      { type: 'Problem', stars: 1, quote: '"Got locked out with no way to recover without contacting support. Took 2 days."', author: 'Carlos Vega', date: '6 weeks ago' },
-    ],
-  },
+  { summary: 'Log in to the application, I need a user-…', fullTitle: 'Design the user interface for the login page.', status: 'To do', priority: 'High', assignee: 'Emily Joh…', assigner: 'Brent Tay…', mentions: 47, customers: 31, revenue: '$2.1M', companies: 'Stripe, Figma, +12', panelMentions: 135, panelCustomers: 10, panelRevenue: '$325K', panelCompanies: ['Apple', 'Google', 'Notion', '+2'], panelSummary: 'Customers want a faster, more modern mobile experience — especially a simpler checkout. Improving this flow is strongly supported across segments and could boost mobile conversion and reduce churn.' },
+  { summary: 'Registering for an account, I need clear wir…', fullTitle: 'Create wireframes for the registration process.', status: 'To do', priority: 'High', assignee: 'Sophia W…', assigner: 'Brent Tay…', mentions: 38, customers: 24, revenue: '$1.8M', companies: 'Notion, Slack, +9', panelMentions: 98, panelCustomers: 14, panelRevenue: '$210K', panelCompanies: ['Figma', 'Linear', 'Vercel', '+3'], panelSummary: 'Registration friction is causing significant drop-off for enterprise accounts. Users report confusion at the team invite step and struggle with email verification delays.' },
+  { summary: 'Reset password, I need a user flow diagra…', fullTitle: 'Develop a user flow diagram for account recovery.', status: 'To do', priority: 'High', assignee: 'Olivia Br…', assigner: 'Brent Tay…', mentions: 29, customers: 18, revenue: '$980K', companies: 'Linear, Vercel, +7', panelMentions: 72, panelCustomers: 8, panelRevenue: '$180K', panelCompanies: ['Stripe', 'Intercom', '+4'], panelSummary: 'Password reset is a consistent pain point. Users report the reset link expiring too quickly and confusion about which email address is associated with their account.' },
+  { summary: 'Developing features for authentication, I n…', fullTitle: 'Write user stories for the authentication feature.', status: 'To do', priority: 'High', assignee: 'Ava Davis', assigner: 'Brent Tay…', mentions: 22, customers: 15, revenue: '$740K', companies: 'Loom, Canva, +5', panelMentions: 55, panelCustomers: 7, panelRevenue: '$140K', panelCompanies: ['Loom', 'Canva', '+3'], panelSummary: 'Enterprise customers are pushing for MFA and SAML SSO. Several deals are stalled pending these auth capabilities, particularly in the financial services segment.' },
+  { summary: 'Authentication methods, I need to co…', fullTitle: 'Conduct a competitive analysis of authentication methods.', status: 'To do', priority: 'High', assignee: 'Ryan Eldr…', assigner: 'Brent Tay…', mentions: 18, customers: 11, revenue: '$620K', companies: 'Miro, Asana, +4', panelMentions: 44, panelCustomers: 6, panelRevenue: '$115K', panelCompanies: ['Asana', 'Monday', '+2'], panelSummary: 'Customers frequently compare auth options to competitors. Passkeys and biometric login are emerging requests, especially from mobile-first teams.' },
+  { summary: 'Discuss security, I want to set up a me…', fullTitle: 'Set up a meeting to discuss security protocols.', status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…', mentions: 14, customers: 9, revenue: '$410K', companies: 'Jira, GitHub, +3', panelMentions: 32, panelCustomers: 5, panelRevenue: '$90K', panelCompanies: ['GitHub', 'GitLab', '+1'], panelSummary: 'Security audit requirements are driving requests for detailed logs, IP allowlisting, and admin controls. Enterprise IT teams want more visibility into user activity.' },
+  { summary: 'For user testing, I need to draft a plan…', fullTitle: 'Draft a plan for user testing the authentication process.', status: 'To do', priority: 'Medium', assignee: 'Sophia W…', assigner: 'Chance C…', mentions: 11, customers: 7, revenue: '$290K', companies: 'Trello, Basecamp', panelMentions: 28, panelCustomers: 4, panelRevenue: '$75K', panelCompanies: ['Trello', 'Basecamp'], panelSummary: 'Usability testing reveals users struggle with the authentication flow on first use. Clear progress indicators and inline error messages would significantly reduce support tickets.' },
+  { summary: 'Passwords, I want to research best pr…', fullTitle: 'Research best practices for password management.', status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…', mentions: 9, customers: 6, revenue: '$220K', companies: 'Dropbox, +2', panelMentions: 22, panelCustomers: 4, panelRevenue: '$60K', panelCompanies: ['Dropbox', '1Password', '+1'], panelSummary: 'Password complexity rules are frustrating users. Many request a password strength meter and support for password manager autofill, which currently breaks in some browsers.' },
+  { summary: 'APIs, I need to create a checklist so…', fullTitle: 'Create a checklist for API documentation.', status: 'To do', priority: 'Medium', assignee: 'Ava Davis', assigner: 'Chance C…', mentions: 8, customers: 5, revenue: '$190K', companies: 'Zapier, +1', panelMentions: 19, panelCustomers: 3, panelRevenue: '$50K', panelCompanies: ['Zapier', 'Make'], panelSummary: 'API key management is lacking — developers want scoped tokens, rotation policies, and usage dashboards. Several integration partners have flagged this as a blocker.' },
+  { summary: 'Security features, I need to outline…', fullTitle: 'Outline the requirements for multi-factor authentication.', status: 'To do', priority: 'Medium', assignee: 'Ryan Eldr…', assigner: 'Chance C…', mentions: 6, customers: 4, revenue: '$130K', companies: 'Postman', panelMentions: 15, panelCustomers: 3, panelRevenue: '$40K', panelCompanies: ['Postman', 'Insomnia'], panelSummary: 'MFA adoption is low because the current TOTP setup is cumbersome. Users want push notification MFA and backup codes that are easier to manage.' },
+  { summary: 'The user dashboard, I need to develop…', fullTitle: 'Develop a prototype for the user dashboard.', status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…', mentions: 5, customers: 3, revenue: '$95K', companies: 'Retool', panelMentions: 12, panelCustomers: 2, panelRevenue: '$30K', panelCompanies: ['Retool'], panelSummary: 'The user dashboard lacks the quick-access shortcuts and activity feed that power users rely on. Customers request a customizable home screen with pinned items.' },
+  { summary: 'Support staff, I need to create a guide on…', fullTitle: 'Compile feedback from stakeholders on the authentication experience.', status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…', mentions: 4, customers: 3, revenue: '$80K', companies: 'Intercom', panelMentions: 10, panelCustomers: 2, panelRevenue: '$25K', panelCompanies: ['Intercom'], panelSummary: 'Support volume around authentication has increased 40% QoQ. Most tickets relate to locked accounts and session management confusion. A self-service unlock flow would reduce load.' },
 ]
+
+// Pre-generate feedback for each row
+tableRows.forEach((row, i) => { row.feedback = generateFeedback(i) })
 
 // ── Row context menu ─────────────────────────────────────────
 function RowMenu({ rowIndex, onOpenPanel, onClose }) {
@@ -748,15 +726,125 @@ function RowMenu({ rowIndex, onOpenPanel, onClose }) {
       <div className="row-ctx-item" onClick={() => { onOpenPanel(rowIndex); onClose() }}>
         <span className="row-ctx-icon">⊟</span> Open side panel
       </div>
-      <div className="row-ctx-item">
-        <span className="row-ctx-icon">✎</span> Edit
-      </div>
-      <div className="row-ctx-item">
-        <span className="row-ctx-icon">⊕</span> Insert row above
-      </div>
-      <div className="row-ctx-item">
-        <span className="row-ctx-icon">⊕</span> Insert row below
-      </div>
+      <div className="row-ctx-item"><span className="row-ctx-icon">✎</span> Edit</div>
+      <div className="row-ctx-item"><span className="row-ctx-icon">⊕</span> Insert row above</div>
+      <div className="row-ctx-item"><span className="row-ctx-icon">⊕</span> Insert row below</div>
+    </div>
+  )
+}
+
+// ── Feedback filter popover ───────────────────────────────────
+const ALL_COMPANIES = ['Apple','Google','Notion','Stripe','Figma','Linear','Vercel','Loom','Canva','Miro','Asana','Atlassian','Slack','Dropbox','Zapier','Intercom','HubSpot','Salesforce','Zendesk','Meta','ProductHunt','GitHub','GitLab','Postman','Retool','Monday','Basecamp','Trello','1Password','Alpha Industries']
+const ALL_ROLES = ['Product Manager','Engineer','Designer','Executive','Customer Success','Sales']
+
+function FeedbackFilter({ filters, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [view, setView] = useState('main')
+  const [companySearch, setCompanySearch] = useState('')
+
+  const toggle = (key, value) => {
+    const next = new Set(filters[key])
+    next.has(value) ? next.delete(value) : next.add(value)
+    onChange({ ...filters, [key]: next })
+  }
+
+  const activeCount = Object.values(filters).reduce((sum, s) => sum + s.size, 0)
+
+  const filteredCompanies = ALL_COMPANIES.filter(c =>
+    c.toLowerCase().includes(companySearch.toLowerCase())
+  )
+
+  return (
+    <div className="fb-filter-wrap">
+      <button className={`fb-filter-btn ${activeCount > 0 ? 'active' : ''}`} onClick={() => { setOpen(v => !v); setView('main') }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 3h12M3 7h8M5 11h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+        {activeCount > 0 && <span className="fb-filter-badge">{activeCount}</span>}
+      </button>
+      {open && (
+        <div className="fb-filter-dropdown">
+          {view === 'main' && (
+            <>
+              <div className="fb-filter-heading">Filter by</div>
+              {[{k:'sources',label:'Source'},{k:'companies',label:'Company'},{k:'roles',label:'User Role'},{k:'others',label:'Other'}].map(f => (
+                <div key={f.k} className="fb-filter-row" onClick={() => setView(f.k)}>
+                  <span>{f.label}</span>
+                  <div className="fb-filter-row-right">
+                    {filters[f.k].size > 0 && <span className="fb-filter-active-count">{filters[f.k].size}</span>}
+                    <span className="fb-chevron">›</span>
+                  </div>
+                </div>
+              ))}
+              {activeCount > 0 && (
+                <button className="fb-clear-btn" onClick={() => onChange({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })}>
+                  Clear all
+                </button>
+              )}
+            </>
+          )}
+          {view === 'sources' && (
+            <>
+              <div className="fb-filter-back" onClick={() => setView('main')}>‹ Source</div>
+              {['Call','Ticket','Message','Other'].map(s => (
+                <label key={s} className="fb-filter-check">
+                  <input type="checkbox" checked={filters.sources.has(s)} onChange={() => toggle('sources', s)} />
+                  {s}
+                </label>
+              ))}
+            </>
+          )}
+          {view === 'companies' && (
+            <>
+              <div className="fb-filter-back" onClick={() => setView('main')}>‹ Company</div>
+              <input className="fb-company-search" placeholder="Search companies…" value={companySearch} onChange={e => setCompanySearch(e.target.value)} autoFocus />
+              <div className="fb-company-list">
+                {filteredCompanies.map(c => (
+                  <label key={c} className="fb-filter-check">
+                    <input type="checkbox" checked={filters.companies.has(c)} onChange={() => toggle('companies', c)} />
+                    {c}
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
+          {view === 'roles' && (
+            <>
+              <div className="fb-filter-back" onClick={() => setView('main')}>‹ User Role</div>
+              {ALL_ROLES.map(r => (
+                <label key={r} className="fb-filter-check">
+                  <input type="checkbox" checked={filters.roles.has(r)} onChange={() => toggle('roles', r)} />
+                  {r}
+                </label>
+              ))}
+            </>
+          )}
+          {view === 'others' && (
+            <>
+              <div className="fb-filter-back" onClick={() => setView('main')}>‹ Other</div>
+              <div className="fb-other-section-label">Call participant</div>
+              {FB_CALL_PARTS.map(p => (
+                <label key={p} className="fb-filter-check">
+                  <input type="checkbox" checked={filters.others.has('cp:'+p)} onChange={() => toggle('others', 'cp:'+p)} />
+                  {p}
+                </label>
+              ))}
+              <div className="fb-other-section-label" style={{marginTop:8}}>Segment</div>
+              {FB_SEGMENTS.map(seg => (
+                <label key={seg} className="fb-filter-check">
+                  <input type="checkbox" checked={filters.others.has('seg:'+seg)} onChange={() => toggle('others', 'seg:'+seg)} />
+                  {seg}
+                </label>
+              ))}
+              <div className="fb-other-section-label" style={{marginTop:8}}>Interview cycle</div>
+              {FB_INTERVIEW_CYCLES.map(ic => (
+                <label key={ic} className="fb-filter-check">
+                  <input type="checkbox" checked={filters.others.has('ic:'+ic)} onChange={() => toggle('others', 'ic:'+ic)} />
+                  {ic}
+                </label>
+              ))}
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -764,7 +852,25 @@ function RowMenu({ rowIndex, onOpenPanel, onClose }) {
 // ── Side panel ───────────────────────────────────────────────
 function SidePanel({ row, onClose }) {
   const [tab, setTab] = useState('Insights')
-  const [feedbackFilter, setFeedbackFilter] = useState('All')
+  const [filters, setFilters] = useState({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })
+  const [sort, setSort] = useState('Latest')
+
+  const visibleFeedback = row.feedback.filter(f => {
+    if (filters.sources.size > 0 && !filters.sources.has(f.source)) return false
+    if (filters.companies.size > 0 && !filters.companies.has(f.company)) return false
+    if (filters.roles.size > 0 && !filters.roles.has(f.role)) return false
+    if (filters.others.size > 0) {
+      const cpMatch = [...filters.others].filter(o => o.startsWith('cp:')).map(o => o.slice(3))
+      const segMatch = [...filters.others].filter(o => o.startsWith('seg:')).map(o => o.slice(4))
+      const icMatch = [...filters.others].filter(o => o.startsWith('ic:')).map(o => o.slice(3))
+      if (cpMatch.length > 0 && !cpMatch.includes(f.callParticipant)) return false
+      if (segMatch.length > 0 && !segMatch.includes(f.segment)) return false
+      if (icMatch.length > 0 && !icMatch.includes(f.interviewCycle)) return false
+    }
+    return true
+  })
+
+  const activeFilterCount = Object.values(filters).reduce((s, set) => s + set.size, 0)
 
   return (
     <div className="side-panel">
@@ -828,33 +934,51 @@ function SidePanel({ row, onClose }) {
               </div>
             </div>
             <div className="sp-section sp-feedback-section">
-              <div className="sp-feedback-header">
-                <div className="sp-section-title">Feedback</div>
-                <select className="sp-filter-select" value={feedbackFilter} onChange={e => setFeedbackFilter(e.target.value)}>
-                  <option>All</option>
-                  <option>Problem</option>
-                  <option>Request</option>
-                </select>
+              <div className="sp-feedback-toolbar">
+                <div className="sp-section-title">Feedback <span className="sp-fb-count">{visibleFeedback.length}</span></div>
+                <div className="sp-feedback-controls">
+                  <div className="sp-sort-select-wrap">
+                    <select className="sp-sort-select" value={sort} onChange={e => setSort(e.target.value)}>
+                      <option>Latest</option>
+                      <option>Oldest</option>
+                      <option>Most critical</option>
+                    </select>
+                  </div>
+                  <FeedbackFilter filters={filters} onChange={setFilters} />
+                </div>
               </div>
+              {activeFilterCount > 0 && (
+                <div className="sp-active-filters">
+                  {[...filters.sources].map(s => <span key={s} className="sp-filter-chip">Source: {s} <button onClick={() => { const n = new Set(filters.sources); n.delete(s); setFilters({...filters, sources: n}) }}>✕</button></span>)}
+                  {[...filters.companies].map(c => <span key={c} className="sp-filter-chip">Company: {c} <button onClick={() => { const n = new Set(filters.companies); n.delete(c); setFilters({...filters, companies: n}) }}>✕</button></span>)}
+                  {[...filters.roles].map(r => <span key={r} className="sp-filter-chip">Role: {r} <button onClick={() => { const n = new Set(filters.roles); n.delete(r); setFilters({...filters, roles: n}) }}>✕</button></span>)}
+                  {[...filters.others].map(o => { const label = o.startsWith('cp:') ? o.slice(3) : o.startsWith('seg:') ? o.slice(4) : o.slice(3); return <span key={o} className="sp-filter-chip">{label} <button onClick={() => { const n = new Set(filters.others); n.delete(o); setFilters({...filters, others: n}) }}>✕</button></span> })}
+                </div>
+              )}
               <div className="sp-feedback-list">
-                {row.feedback
-                  .filter(f => feedbackFilter === 'All' || f.type === feedbackFilter)
-                  .map((f, i) => (
-                    <div key={i} className="sp-feedback-card">
-                      <div className="sp-feedback-top">
-                        <span className={`sp-feedback-type sp-type-${f.type.toLowerCase()}`}>{f.type} ⓘ</span>
-                        <button className="sp-fb-more">⋮</button>
-                      </div>
-                      <div className="sp-stars">
-                        {[1,2,3,4,5].map(s => (
-                          <span key={s} className={s <= f.stars ? 'star on' : 'star off'}>★</span>
-                        ))}
-                      </div>
-                      <div className="sp-quote">{f.quote}</div>
-                      <div className="sp-author">{f.author}</div>
-                      <div className="sp-date">Added {f.date}</div>
+                {visibleFeedback.length === 0 && (
+                  <div className="sp-fb-empty">No feedback matches the current filters.</div>
+                )}
+                {visibleFeedback.map((f, i) => (
+                  <div key={i} className={`sp-feedback-card sp-card-${f.type.toLowerCase()}`}>
+                    <div className="sp-feedback-top">
+                      <span className={`sp-feedback-type sp-type-${f.type.toLowerCase()}`}>
+                        {f.type === 'Problem' ? 'User problem' : f.type === 'Request' ? 'User request' : 'User praise'} ⓘ
+                      </span>
+                      <button className="sp-fb-more">⋮</button>
                     </div>
-                  ))}
+                    <div className="sp-stars">
+                      {[1,2,3,4,5].map(s => <span key={s} className={s <= f.stars ? 'star on' : 'star off'}>★</span>)}
+                    </div>
+                    <div className="sp-quote">{f.quote}</div>
+                    <div className="sp-author-row">{f.author}, {f.company}</div>
+                    <div className="sp-card-footer">
+                      <span className="sp-card-tag">📅 {f.date}</span>
+                      <span className="sp-card-tag sp-tag-source">{f.source}</span>
+                      <span className="sp-card-tag">{f.role}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
