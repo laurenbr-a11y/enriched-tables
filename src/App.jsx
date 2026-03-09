@@ -521,6 +521,7 @@ function EnrichConfirm({ onNext, onSkip }) {
 // ── SCREEN 6: Enrichment start (table + generating toast) ────
 function EnrichmentStart({ onNext }) {
   const [toastVisible, setToastVisible] = useState(true)
+  const [panelRow, setPanelRow] = useState(null)
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -541,7 +542,10 @@ function EnrichmentStart({ onNext }) {
             <span className="toolbar-icon">▽</span><span className="toolbar-icon">↕</span>
             <span className="toolbar-icon">⊞</span><span className="toolbar-icon">🔗</span>
           </div>
-          <EnrichedTableView enriching />
+          <div className="table-panel-layout">
+            <EnrichedTableView enriching onOpenPanel={setPanelRow} panelRow={panelRow} />
+            {panelRow !== null && <SidePanel row={tableRows[panelRow]} onClose={() => setPanelRow(null)} />}
+          </div>
           {toastVisible && (
             <div className="generating-toast">
               <button className="toast-close" onClick={() => setToastVisible(false)}>✕</button>
@@ -560,6 +564,8 @@ function EnrichmentStart({ onNext }) {
 
 // ── SCREEN 7: Enriched table ─────────────────────────────────
 function EnrichedTable({ onRestart }) {
+  const [panelRow, setPanelRow] = useState(null)
+
   return (
     <div className="board-screen">
       <MiroTopbar showBoard title="Product Roadmap" />
@@ -571,7 +577,10 @@ function EnrichedTable({ onRestart }) {
             <span className="toolbar-icon">▽</span><span className="toolbar-icon">↕</span>
             <span className="toolbar-icon">⊞</span><span className="toolbar-icon">🔗</span>
           </div>
-          <EnrichedTableView enriching={false} />
+          <div className="table-panel-layout">
+            <EnrichedTableView enriching={false} onOpenPanel={setPanelRow} panelRow={panelRow} />
+            {panelRow !== null && <SidePanel row={tableRows[panelRow]} onClose={() => setPanelRow(null)} />}
+          </div>
           <div className="restart-hint" onClick={onRestart}>↩ Restart prototype</div>
         </div>
       </div>
@@ -581,21 +590,283 @@ function EnrichedTable({ onRestart }) {
 
 // ── Shared enriched table view ───────────────────────────────
 const tableRows = [
-  { summary: 'Log in to the application, I need a user-…',  status: 'To do', priority: 'High',   assignee: 'Emily Joh…', assigner: 'Brent Tay…', mentions: 47, customers: 31, revenue: '$2.1M', companies: 'Stripe, Figma, +12' },
-  { summary: 'Registering for an account, I need clear wir…', status: 'To do', priority: 'High', assignee: 'Sophia W…', assigner: 'Brent Tay…', mentions: 38, customers: 24, revenue: '$1.8M', companies: 'Notion, Slack, +9' },
-  { summary: 'Reset password, I need a user flow diagra…',   status: 'To do', priority: 'High',   assignee: 'Olivia Br…', assigner: 'Brent Tay…', mentions: 29, customers: 18, revenue: '$980K', companies: 'Linear, Vercel, +7' },
-  { summary: 'Developing features for authentication, I n…', status: 'To do', priority: 'High',   assignee: 'Ava Davis', assigner: 'Brent Tay…', mentions: 22, customers: 15, revenue: '$740K', companies: 'Loom, Canva, +5' },
-  { summary: 'Authentication methods, I need to co…',         status: 'To do', priority: 'High',   assignee: 'Ryan Eldr…', assigner: 'Brent Tay…', mentions: 18, customers: 11, revenue: '$620K', companies: 'Miro, Asana, +4' },
-  { summary: 'Discuss security, I want to set up a me…',     status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…', mentions: 14, customers: 9,  revenue: '$410K', companies: 'Jira, GitHub, +3' },
-  { summary: 'For user testing, I need to draft a plan…',    status: 'To do', priority: 'Medium', assignee: 'Sophia W…', assigner: 'Chance C…', mentions: 11, customers: 7,  revenue: '$290K', companies: 'Trello, Basecamp' },
-  { summary: 'Passwords, I want to research best pr…',       status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…', mentions: 9,  customers: 6,  revenue: '$220K', companies: 'Dropbox, +2' },
-  { summary: 'APIs, I need to create a checklist so…',       status: 'To do', priority: 'Medium', assignee: 'Ava Davis', assigner: 'Chance C…', mentions: 8,  customers: 5,  revenue: '$190K', companies: 'Zapier, +1' },
-  { summary: 'Security features, I need to outline…',        status: 'To do', priority: 'Medium', assignee: 'Ryan Eldr…', assigner: 'Chance C…', mentions: 6,  customers: 4,  revenue: '$130K', companies: 'Postman' },
-  { summary: 'The user dashboard, I need to develop…',       status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…', mentions: 5,  customers: 3,  revenue: '$95K',  companies: 'Retool' },
-  { summary: 'Support staff, I need to create a guide on…', status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…', mentions: 4,  customers: 3,  revenue: '$80K',  companies: 'Intercom' },
+  {
+    summary: 'Log in to the application, I need a user-…',
+    fullTitle: 'Design the user interface for the login page.',
+    status: 'To do', priority: 'High', assignee: 'Emily Joh…', assigner: 'Brent Tay…',
+    mentions: 47, customers: 31, revenue: '$2.1M', companies: 'Stripe, Figma, +12',
+    panelMentions: 135, panelCustomers: 10, panelRevenue: '$325K',
+    panelCompanies: ['Apple', 'Google', 'Notion', '+2'],
+    panelSummary: 'Customers want a faster, more modern mobile experience — especially a simpler checkout. Improving this flow is strongly supported across segments and could boost mobile conversion and reduce churn.',
+    feedback: [
+      { type: 'Problem', stars: 2, quote: '"The app technically works, but every tap feels like it\'s thinking hard before responding."', author: 'John Butter', date: '1 month ago' },
+      { type: 'Problem', stars: 1, quote: '"Login takes 8+ seconds on mobile. We\'ve had users abandon signup entirely."', author: 'Sarah Kim', date: '3 weeks ago' },
+      { type: 'Request', stars: 4, quote: '"Would love SSO support — our team logs in 10+ times a day and it\'s painful."', author: 'Marcus Lee', date: '2 weeks ago' },
+    ],
+  },
+  {
+    summary: 'Registering for an account, I need clear wir…',
+    fullTitle: 'Create wireframes for the registration process.',
+    status: 'To do', priority: 'High', assignee: 'Sophia W…', assigner: 'Brent Tay…',
+    mentions: 38, customers: 24, revenue: '$1.8M', companies: 'Notion, Slack, +9',
+    panelMentions: 98, panelCustomers: 14, panelRevenue: '$210K',
+    panelCompanies: ['Figma', 'Linear', 'Vercel', '+3'],
+    panelSummary: 'Registration friction is causing significant drop-off for enterprise accounts. Users report confusion at the team invite step and struggle with email verification delays.',
+    feedback: [
+      { type: 'Problem', stars: 2, quote: '"We lost 3 teammates during onboarding because the invite email never arrived."', author: 'Priya Patel', date: '2 months ago' },
+      { type: 'Request', stars: 3, quote: '"Please add Google/GitHub OAuth. Manual registration feels outdated."', author: 'Dan Rowe', date: '5 weeks ago' },
+    ],
+  },
+  {
+    summary: 'Reset password, I need a user flow diagra…',
+    fullTitle: 'Develop a user flow diagram for account recovery.',
+    status: 'To do', priority: 'High', assignee: 'Olivia Br…', assigner: 'Brent Tay…',
+    mentions: 29, customers: 18, revenue: '$980K', companies: 'Linear, Vercel, +7',
+    panelMentions: 72, panelCustomers: 8, panelRevenue: '$180K',
+    panelCompanies: ['Stripe', 'Intercom', '+4'],
+    panelSummary: 'Password reset is a consistent pain point. Users report the reset link expiring too quickly and confusion about which email address is associated with their account.',
+    feedback: [
+      { type: 'Problem', stars: 1, quote: '"Reset link expired before I could use it. Had to request 4 times."', author: 'Tara Singh', date: '1 month ago' },
+      { type: 'Problem', stars: 2, quote: '"No indication of which email the link was sent to. Very confusing."', author: 'Leo Chen', date: '3 weeks ago' },
+    ],
+  },
+  {
+    summary: 'Developing features for authentication, I n…',
+    fullTitle: 'Write user stories for the authentication feature.',
+    status: 'To do', priority: 'High', assignee: 'Ava Davis', assigner: 'Brent Tay…',
+    mentions: 22, customers: 15, revenue: '$740K', companies: 'Loom, Canva, +5',
+    panelMentions: 55, panelCustomers: 7, panelRevenue: '$140K',
+    panelCompanies: ['Loom', 'Canva', '+3'],
+    panelSummary: 'Enterprise customers are pushing for MFA and SAML SSO. Several deals are stalled pending these auth capabilities, particularly in the financial services segment.',
+    feedback: [
+      { type: 'Request', stars: 4, quote: '"We need SAML SSO before we can roll this out company-wide. It\'s a blocker."', author: 'James O\'Brien', date: '6 weeks ago' },
+      { type: 'Problem', stars: 2, quote: '"Session timeouts are too aggressive — users are getting logged out mid-work."', author: 'Nadia Kowalski', date: '1 month ago' },
+    ],
+  },
+  {
+    summary: 'Authentication methods, I need to co…',
+    fullTitle: 'Conduct a competitive analysis of authentication methods.',
+    status: 'To do', priority: 'High', assignee: 'Ryan Eldr…', assigner: 'Brent Tay…',
+    mentions: 18, customers: 11, revenue: '$620K', companies: 'Miro, Asana, +4',
+    panelMentions: 44, panelCustomers: 6, panelRevenue: '$115K',
+    panelCompanies: ['Asana', 'Monday', '+2'],
+    panelSummary: 'Customers frequently compare auth options to competitors. Passkeys and biometric login are emerging requests, especially from mobile-first teams.',
+    feedback: [
+      { type: 'Request', stars: 5, quote: '"Competitors offer Face ID login. Would love to see that here too."', author: 'Anna Flores', date: '2 weeks ago' },
+    ],
+  },
+  {
+    summary: 'Discuss security, I want to set up a me…',
+    fullTitle: 'Set up a meeting to discuss security protocols.',
+    status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…',
+    mentions: 14, customers: 9, revenue: '$410K', companies: 'Jira, GitHub, +3',
+    panelMentions: 32, panelCustomers: 5, panelRevenue: '$90K',
+    panelCompanies: ['GitHub', 'GitLab', '+1'],
+    panelSummary: 'Security audit requirements are driving requests for detailed logs, IP allowlisting, and admin controls. Enterprise IT teams want more visibility into user activity.',
+    feedback: [
+      { type: 'Problem', stars: 2, quote: '"We can\'t pass our SOC2 audit without audit logs. This is urgent for us."', author: 'Chris Walton', date: '3 months ago' },
+    ],
+  },
+  {
+    summary: 'For user testing, I need to draft a plan…',
+    fullTitle: 'Draft a plan for user testing the authentication process.',
+    status: 'To do', priority: 'Medium', assignee: 'Sophia W…', assigner: 'Chance C…',
+    mentions: 11, customers: 7, revenue: '$290K', companies: 'Trello, Basecamp',
+    panelMentions: 28, panelCustomers: 4, panelRevenue: '$75K',
+    panelCompanies: ['Trello', 'Basecamp'],
+    panelSummary: 'Usability testing reveals users struggle with the authentication flow on first use. Clear progress indicators and inline error messages would significantly reduce support tickets.',
+    feedback: [
+      { type: 'Problem', stars: 3, quote: '"First-time login was confusing — no indication of what step I was on."', author: 'Maya Johansson', date: '2 months ago' },
+    ],
+  },
+  {
+    summary: 'Passwords, I want to research best pr…',
+    fullTitle: 'Research best practices for password management.',
+    status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…',
+    mentions: 9, customers: 6, revenue: '$220K', companies: 'Dropbox, +2',
+    panelMentions: 22, panelCustomers: 4, panelRevenue: '$60K',
+    panelCompanies: ['Dropbox', '1Password', '+1'],
+    panelSummary: 'Password complexity rules are frustrating users. Many request a password strength meter and support for password manager autofill, which currently breaks in some browsers.',
+    feedback: [
+      { type: 'Problem', stars: 2, quote: '"Your password rules rejected my password manager\'s generated password. Absurd."', author: 'Ben Carter', date: '5 weeks ago' },
+    ],
+  },
+  {
+    summary: 'APIs, I need to create a checklist so…',
+    fullTitle: 'Create a checklist for API documentation.',
+    status: 'To do', priority: 'Medium', assignee: 'Ava Davis', assigner: 'Chance C…',
+    mentions: 8, customers: 5, revenue: '$190K', companies: 'Zapier, +1',
+    panelMentions: 19, panelCustomers: 3, panelRevenue: '$50K',
+    panelCompanies: ['Zapier', 'Make'],
+    panelSummary: 'API key management is lacking — developers want scoped tokens, rotation policies, and usage dashboards. Several integration partners have flagged this as a blocker.',
+    feedback: [
+      { type: 'Request', stars: 4, quote: '"We need scoped API keys before we can recommend this to our clients."', author: 'Sophie Turner', date: '1 month ago' },
+    ],
+  },
+  {
+    summary: 'Security features, I need to outline…',
+    fullTitle: 'Outline the requirements for multi-factor authentication.',
+    status: 'To do', priority: 'Medium', assignee: 'Ryan Eldr…', assigner: 'Chance C…',
+    mentions: 6, customers: 4, revenue: '$130K', companies: 'Postman',
+    panelMentions: 15, panelCustomers: 3, panelRevenue: '$40K',
+    panelCompanies: ['Postman', 'Insomnia'],
+    panelSummary: 'MFA adoption is low because the current TOTP setup is cumbersome. Users want push notification MFA and backup codes that are easier to manage.',
+    feedback: [
+      { type: 'Problem', stars: 2, quote: '"Lost access to my account when my phone broke — backup codes weren\'t clear."', author: 'Tom Nakamura', date: '2 months ago' },
+    ],
+  },
+  {
+    summary: 'The user dashboard, I need to develop…',
+    fullTitle: 'Develop a prototype for the user dashboard.',
+    status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…',
+    mentions: 5, customers: 3, revenue: '$95K', companies: 'Retool',
+    panelMentions: 12, panelCustomers: 2, panelRevenue: '$30K',
+    panelCompanies: ['Retool'],
+    panelSummary: 'The user dashboard lacks the quick-access shortcuts and activity feed that power users rely on. Customers request a customizable home screen with pinned items.',
+    feedback: [
+      { type: 'Request', stars: 4, quote: '"I want to pin my most-used views to the top. Navigation takes too many clicks."', author: 'Isla Brooks', date: '3 weeks ago' },
+    ],
+  },
+  {
+    summary: 'Support staff, I need to create a guide on…',
+    fullTitle: 'Compile feedback from stakeholders on the authentication experience.',
+    status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…',
+    mentions: 4, customers: 3, revenue: '$80K', companies: 'Intercom',
+    panelMentions: 10, panelCustomers: 2, panelRevenue: '$25K',
+    panelCompanies: ['Intercom'],
+    panelSummary: 'Support volume around authentication has increased 40% QoQ. Most tickets relate to locked accounts and session management confusion. A self-service unlock flow would reduce load.',
+    feedback: [
+      { type: 'Problem', stars: 1, quote: '"Got locked out with no way to recover without contacting support. Took 2 days."', author: 'Carlos Vega', date: '6 weeks ago' },
+    ],
+  },
 ]
 
-function EnrichedTableView({ enriching }) {
+// ── Row context menu ─────────────────────────────────────────
+function RowMenu({ rowIndex, onOpenPanel, onClose }) {
+  return (
+    <div className="row-ctx-menu" onMouseLeave={onClose}>
+      <div className="row-ctx-item" onClick={() => { onOpenPanel(rowIndex); onClose() }}>
+        <span className="row-ctx-icon">⊟</span> Open side panel
+      </div>
+      <div className="row-ctx-item">
+        <span className="row-ctx-icon">✎</span> Edit
+      </div>
+      <div className="row-ctx-item">
+        <span className="row-ctx-icon">⊕</span> Insert row above
+      </div>
+      <div className="row-ctx-item">
+        <span className="row-ctx-icon">⊕</span> Insert row below
+      </div>
+    </div>
+  )
+}
+
+// ── Side panel ───────────────────────────────────────────────
+function SidePanel({ row, onClose }) {
+  const [tab, setTab] = useState('Insights')
+  const [feedbackFilter, setFeedbackFilter] = useState('All')
+
+  return (
+    <div className="side-panel">
+      <div className="sp-header">
+        <span className="sp-title" title={row.fullTitle}>{row.fullTitle}</span>
+        <div className="sp-header-actions">
+          <button className="sp-icon-btn">⤢</button>
+          <button className="sp-icon-btn">🔗</button>
+          <button className="sp-icon-btn" onClick={onClose}>✕</button>
+        </div>
+      </div>
+      <div className="sp-tabs">
+        {['Details', 'Comments', 'Insights'].map(t => (
+          <button key={t} className={`sp-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t}</button>
+        ))}
+      </div>
+      <div className="sp-body">
+        {tab === 'Details' && (
+          <div className="sp-placeholder">
+            <div className="sp-field"><span className="sp-field-label">Status</span><span className="status-tag">To do</span></div>
+            <div className="sp-field"><span className="sp-field-label">Priority</span><span className="priority-badge p-high">High</span></div>
+            <div className="sp-field"><span className="sp-field-label">Assignee</span><span>{row.assignee}</span></div>
+            <div className="sp-field"><span className="sp-field-label">Description</span><span className="sp-desc-text">No description added yet.</span></div>
+          </div>
+        )}
+        {tab === 'Comments' && (
+          <div className="sp-placeholder sp-empty">
+            <div className="sp-empty-icon">💬</div>
+            <div>No comments yet</div>
+          </div>
+        )}
+        {tab === 'Insights' && (
+          <div className="sp-insights">
+            <div className="sp-section">
+              <div className="sp-section-title">Summary</div>
+              <p className="sp-summary-text">{row.panelSummary}</p>
+            </div>
+            <div className="sp-section">
+              <div className="sp-section-title">Impact estimates</div>
+              <div className="sp-impact-grid">
+                <div className="sp-impact-item">
+                  <div className="sp-impact-num">{row.panelMentions}</div>
+                  <div className="sp-impact-label">Total Mentions</div>
+                </div>
+                <div className="sp-impact-item">
+                  <div className="sp-impact-num">{row.panelCustomers}</div>
+                  <div className="sp-impact-label">Unique Customers</div>
+                </div>
+                <div className="sp-impact-item">
+                  <div className="sp-impact-num">{row.panelRevenue}</div>
+                  <div className="sp-impact-label">Est. Revenue Impact</div>
+                </div>
+              </div>
+            </div>
+            <div className="sp-section">
+              <div className="sp-section-title">Top impacted customers</div>
+              <div className="sp-customer-chips">
+                {row.panelCompanies.map(c => (
+                  <span key={c} className="sp-company-chip">{c}</span>
+                ))}
+              </div>
+            </div>
+            <div className="sp-section sp-feedback-section">
+              <div className="sp-feedback-header">
+                <div className="sp-section-title">Feedback</div>
+                <select className="sp-filter-select" value={feedbackFilter} onChange={e => setFeedbackFilter(e.target.value)}>
+                  <option>All</option>
+                  <option>Problem</option>
+                  <option>Request</option>
+                </select>
+              </div>
+              <div className="sp-feedback-list">
+                {row.feedback
+                  .filter(f => feedbackFilter === 'All' || f.type === feedbackFilter)
+                  .map((f, i) => (
+                    <div key={i} className="sp-feedback-card">
+                      <div className="sp-feedback-top">
+                        <span className={`sp-feedback-type sp-type-${f.type.toLowerCase()}`}>{f.type} ⓘ</span>
+                        <button className="sp-fb-more">⋮</button>
+                      </div>
+                      <div className="sp-stars">
+                        {[1,2,3,4,5].map(s => (
+                          <span key={s} className={s <= f.stars ? 'star on' : 'star off'}>★</span>
+                        ))}
+                      </div>
+                      <div className="sp-quote">{f.quote}</div>
+                      <div className="sp-author">{f.author}</div>
+                      <div className="sp-date">Added {f.date}</div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function EnrichedTableView({ enriching, onOpenPanel, panelRow }) {
+  const [hoveredRow, setHoveredRow] = useState(null)
+  const [menuRow, setMenuRow] = useState(null)
   const cols = ['Status', 'Priority', 'Assignee', 'Assigner', 'Mentions', 'Customers', 'Est. Revenue', 'Companies']
   const enrichedCols = ['Mentions', 'Customers', 'Est. Revenue', 'Companies']
 
@@ -604,12 +875,13 @@ function EnrichedTableView({ enriching }) {
       <table className="backlog-table enriched">
         <thead>
           <tr>
+            <th className="row-num-col"></th>
             <th className="summary-col"></th>
             {cols.map(c => (
               <th key={c} className={enrichedCols.includes(c) ? 'enriched-col' : ''}>
                 {enrichedCols.includes(c) && <span className="enriched-col-indicator" />}
-                {c === 'Mentions' || c === 'Customers' || c === 'Est. Revenue' ? '#' : c === 'Companies' ? '≡' : ''}
-                {' '}{c}
+                {c === 'Mentions' || c === 'Customers' || c === 'Est. Revenue' ? '# ' : c === 'Companies' ? '≡ ' : ''}
+                {c}
               </th>
             ))}
             <th className="add-col">+</th>
@@ -617,7 +889,24 @@ function EnrichedTableView({ enriching }) {
         </thead>
         <tbody>
           {tableRows.map((row, i) => (
-            <tr key={i}>
+            <tr
+              key={i}
+              className={panelRow === i ? 'row-selected' : ''}
+              onMouseEnter={() => setHoveredRow(i)}
+              onMouseLeave={() => { setHoveredRow(null); setMenuRow(null) }}
+            >
+              <td className="row-num-col">
+                <div className="row-num-cell">
+                  {menuRow === i ? (
+                    <RowMenu rowIndex={i} onOpenPanel={onOpenPanel} onClose={() => setMenuRow(null)} />
+                  ) : null}
+                  {hoveredRow === i ? (
+                    <button className="row-menu-btn" onClick={() => setMenuRow(i)}>•••</button>
+                  ) : (
+                    <span className="row-num">{i + 1}</span>
+                  )}
+                </div>
+              </td>
               <td className="summary-col">{row.summary}</td>
               <td><span className="status-tag">{row.status}</span></td>
               <td><span className={`priority-badge p-${row.priority.toLowerCase()}`}>{row.priority}</span></td>
