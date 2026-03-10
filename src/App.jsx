@@ -20,11 +20,10 @@ export default function App() {
   const next = () => setStep(s => s + 1)
   const goto = (n) => setStep(n)
   const goHome = () => goto(0)
-  const goSpace = () => goto(step >= 9 ? 9 : step >= 8 ? 8 : 3) // go to furthest board screen
 
   return (
     <div className="app">
-      {step === 0 && <HomeScreen onNext={next} spaceName={spaceName} onOpenSpace={() => goto(spaceName ? 3 : 1)} />}
+      {step === 0 && <HomeScreen onNext={next} spaceName={spaceName} onOpenSpace={() => goto(spaceName ? 3 : 1)} onOpenMiroInsights={() => goto(10)} />}
       {step === 1 && <TemplatesScreen onNext={next} onBack={() => goto(0)} />}
       {step === 2 && <BlueprintDetail onNext={(name) => { setSpaceName(name); next() }} onBack={() => goto(1)} />}
       {step === 3 && <BacklogEmpty onNext={next} spaceName={spaceName} onGoHome={goHome} />}
@@ -34,6 +33,7 @@ export default function App() {
       {step === 7 && <EnrichmentStart onNext={next} />}
       {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} spaceName={spaceName} onGoHome={goHome} />}
       {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} />}
+      {step === 10 && <EnrichedTable rows={miroInsightsRows} spaceName="Miro Insights Roadmap" onGoHome={goHome} onRestart={() => goto(0)} />}
     </div>
   )
 }
@@ -116,8 +116,9 @@ function Overlay({ children, onClose }) {
 }
 
 // ── SCREEN 0: Home ──────────────────────────────────────────
-function HomeScreen({ onNext, spaceName, onOpenSpace }) {
+function HomeScreen({ onNext, spaceName, onOpenSpace, onOpenMiroInsights }) {
   const boards = [
+    { icon: '📋', name: 'Miro Insights Roadmap', mod: 'Today', space: 'Miro Insights…', owner: 'Lauren Brucato', badge: 'Internal', clickable: true },
     { icon: '💡', name: 'Insights: Onboarding Journey Map', mod: 'Today', space: 'Miro Insights…', owner: 'Holly Rankin', badge: 'Internal' },
     { icon: '✅', name: 'Miro Insights Playtests', mod: 'Jan 30', space: 'Miro Insights…', owner: 'Mor Sela', badge: 'Internal' },
     { icon: '💬', name: 'Insights-Driven Roadmapping Evolution', mod: 'Yesterday', space: '', owner: 'Lauren Brucato', badge: 'Internal' },
@@ -143,13 +144,15 @@ function HomeScreen({ onNext, spaceName, onOpenSpace }) {
           ))}
         </nav>
         <div className="home-nav-section">Spaces</div>
-        {spaceName ? (
+        <div className="home-nav-item home-space-item" onClick={onOpenMiroInsights}>
+          <span className="home-space-dot" />
+          Miro Insights Roadmap
+        </div>
+        {spaceName && (
           <div className="home-nav-item home-space-item" onClick={onOpenSpace}>
-            <span className="home-space-dot" />
+            <span className="home-space-dot" style={{ background: '#5B9BD5' }} />
             {spaceName}
           </div>
-        ) : (
-          <div className="home-nav-item dim">Your Spaces</div>
         )}
       </div>
       <div className="home-main">
@@ -188,7 +191,7 @@ function HomeScreen({ onNext, spaceName, onOpenSpace }) {
             </thead>
             <tbody>
               {boards.map(b => (
-                <tr key={b.name}>
+                <tr key={b.name} onClick={b.clickable ? onOpenMiroInsights : undefined} style={b.clickable ? { cursor: 'pointer' } : {}}>
                   <td><span className="board-icon">{b.icon}</span>{b.name}</td>
                   <td><div className="avatar av1" style={{width:24,height:24,fontSize:11}}>A</div></td>
                   <td>{b.space}</td>
@@ -725,7 +728,7 @@ function EnrichmentStart({ onNext }) {
 }
 
 // ── SCREEN 7: Enriched table ─────────────────────────────────
-function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome }) {
+function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome, rows = tableRows }) {
   const [panelRow, setPanelRow] = useState(null)
 
   return (
@@ -740,8 +743,8 @@ function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome }) {
             <span className="toolbar-icon">⊞</span><span className="toolbar-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 1.5v8M4.5 4.5l3-3 3 3M2.5 10.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="#555" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
           </div>
           <div className="table-panel-layout">
-            <EnrichedTableView enriching={false} onOpenPanel={setPanelRow} panelRow={panelRow} />
-            {panelRow !== null && <SidePanel row={tableRows[panelRow]} onClose={() => setPanelRow(null)} />}
+            <EnrichedTableView enriching={false} onOpenPanel={setPanelRow} panelRow={panelRow} rows={rows} />
+            {panelRow !== null && <SidePanel row={rows[panelRow]} onClose={() => setPanelRow(null)} />}
           </div>
           <div className="restart-hint" onClick={onRestart}>↩ Restart prototype</div>
         </div>
@@ -880,6 +883,39 @@ const tableRows = [
 
 // Pre-generate feedback for each row
 tableRows.forEach((row, i) => { row.feedback = generateFeedback(i) })
+
+const miroInsightsRows = [
+  // High fidelity (good context, panelMentions >= 70)
+  { summary: 'Auto-group customer feedback by theme using ML…', fullTitle: 'AI-powered feedback clustering', status: 'In Progress', priority: 'High', assignee: 'Emily Joh…', assigner: 'Brent Tay…', mentions: 89, customers: 54, revenue: '$3.2M', companies: 'Stripe, Figma, +18', panelMentions: 210, panelCustomers: 42, panelRevenue: '$890K', panelCompanies: ['Stripe', 'Figma', 'Notion', '+8'], panelSummary: 'Teams waste hours manually tagging and grouping feedback. An AI-powered clustering system would automatically surface themes across thousands of data points, dramatically reducing time-to-insight and improving signal quality for roadmap decisions.' },
+  { summary: 'Live dashboard showing customer sentiment trends…', fullTitle: 'Real-time insights dashboard', status: 'In Progress', priority: 'High', assignee: 'Sophia W…', assigner: 'Brent Tay…', mentions: 74, customers: 47, revenue: '$2.8M', companies: 'Notion, Slack, +14', panelMentions: 185, panelCustomers: 38, panelRevenue: '$720K', panelCompanies: ['Linear', 'Vercel', 'Loom', '+6'], panelSummary: 'PMs currently export data to spreadsheets to see trends. A real-time dashboard would surface velocity, sentiment shifts, and emerging themes as they happen, enabling faster response to customer signals.' },
+  { summary: 'Bi-directional sync between Miro backlog and Jira…', fullTitle: 'Jira two-way sync', status: 'To do', priority: 'High', assignee: 'Olivia Br…', assigner: 'Brent Tay…', mentions: 68, customers: 41, revenue: '$2.4M', companies: 'Atlassian, +12', panelMentions: 160, panelCustomers: 33, panelRevenue: '$580K', panelCompanies: ['Atlassian', 'GitHub', 'Linear', '+5'], panelSummary: 'Teams using both Miro and Jira are doing double data entry. Two-way sync would eliminate that by keeping backlog items, status, and priorities in sync without manual intervention.' },
+  { summary: 'Import feedback from CSV, Intercom, or Zendesk…', fullTitle: 'Bulk feedback import', status: 'To do', priority: 'High', assignee: 'Ava Davis', assigner: 'Brent Tay…', mentions: 61, customers: 38, revenue: '$2.1M', companies: 'Zendesk, Intercom, +10', panelMentions: 145, panelCustomers: 29, panelRevenue: '$490K', panelCompanies: ['Zendesk', 'Intercom', 'HubSpot', '+4'], panelSummary: 'Most customers have existing feedback in Zendesk, Intercom, or spreadsheets. A robust import tool would let them bring historical data in without starting from scratch, accelerating time-to-value.' },
+  { summary: 'Score each feature request by estimated revenue impact…', fullTitle: 'Revenue impact scoring', status: 'To do', priority: 'High', assignee: 'Ryan Eldr…', assigner: 'Brent Tay…', mentions: 55, customers: 34, revenue: '$1.9M', companies: 'Salesforce, +9', panelMentions: 130, panelCustomers: 26, panelRevenue: '$420K', panelCompanies: ['Salesforce', 'HubSpot', 'Stripe', '+3'], panelSummary: 'Revenue impact is the top missing metric for roadmap prioritization. Customers want to see which items are tied to expansion ARR, renewal risk, or new logo deals — not just raw mention counts.' },
+  { summary: 'One-click export of insights report for leadership…', fullTitle: 'Stakeholder report generation', status: 'To do', priority: 'High', assignee: 'Emily Joh…', assigner: 'Chance C…', mentions: 47, customers: 29, revenue: '$1.6M', companies: 'Google, Meta, +8', panelMentions: 110, panelCustomers: 22, panelRevenue: '$360K', panelCompanies: ['Google', 'Meta', 'Apple', '+3'], panelSummary: 'PMs spend 2–3 hours preparing insights summaries for leadership reviews. Automated report generation with customizable templates would eliminate this and ensure consistent storytelling from data.' },
+  { summary: 'Merge duplicate or near-duplicate feedback automatically…', fullTitle: 'Feedback deduplication engine', status: 'In Progress', priority: 'Medium', assignee: 'Sophia W…', assigner: 'Chance C…', mentions: 39, customers: 24, revenue: '$1.3M', companies: 'Figma, Linear, +7', panelMentions: 95, panelCustomers: 19, panelRevenue: '$290K', panelCompanies: ['Figma', 'Linear', 'Notion', '+2'], panelSummary: 'Duplicate feedback inflates mention counts and distorts prioritization. Smart deduplication using semantic similarity would surface truer signal and reduce the manual cleanup that teams currently do before each planning cycle.' },
+  { summary: 'Filter all insights by customer segment, tier, or ARR…', fullTitle: 'Customer segment filtering', status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…', mentions: 33, customers: 20, revenue: '$1.1M', companies: 'Stripe, +6', panelMentions: 80, panelCustomers: 16, panelRevenue: '$240K', panelCompanies: ['Stripe', 'Figma', 'Canva', '+2'], panelSummary: 'Enterprise and SMB customers have fundamentally different needs. Segment filtering would let PMs instantly see which issues are blocking their top accounts versus long-tail users, enabling more targeted prioritization.' },
+  // Medium fidelity (weak context, panelMentions 28–69)
+  { summary: 'Alert PM when new feedback matches a roadmap item…', fullTitle: 'Slack digest notifications', status: 'To do', priority: 'Medium', assignee: 'Ava Davis', assigner: 'Chance C…', mentions: 28, customers: 17, revenue: '$890K', companies: 'Slack, +5', panelMentions: 65, panelCustomers: 13, panelRevenue: '$190K', panelCompanies: ['Slack', 'Notion', '+2'], panelSummary: 'PMs miss new feedback because they have to proactively check the board. Slack digests would push a daily or real-time summary of new matched feedback, keeping teams informed without extra effort.' },
+  { summary: 'Identify rising feedback themes over time…', fullTitle: 'Trend detection and alerts', status: 'To do', priority: 'Medium', assignee: 'Ryan Eldr…', assigner: 'Chance C…', mentions: 24, customers: 15, revenue: '$760K', companies: 'Asana, +4', panelMentions: 58, panelCustomers: 11, panelRevenue: '$160K', panelCompanies: ['Asana', 'Monday', '+1'], panelSummary: 'Teams want early warning when a new pain point starts accelerating. Trend detection would surface items with rapidly increasing mentions before they become crises.' },
+  { summary: 'Add custom attributes to backlog items and insights…', fullTitle: 'Custom data fields', status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Chance C…', mentions: 21, customers: 13, revenue: '$640K', companies: 'Notion, +3', panelMentions: 50, panelCustomers: 10, panelRevenue: '$135K', panelCompanies: ['Notion', 'Coda', '+1'], panelSummary: 'Different teams track different metadata. Custom fields would let teams define their own dimensions — release quarter, team owner, customer tier — without being limited to the default schema.' },
+  { summary: 'Aggregate insights across multiple Miro boards…', fullTitle: 'Multi-board rollup view', status: 'To do', priority: 'Medium', assignee: 'Sophia W…', assigner: 'Brent Tay…', mentions: 18, customers: 11, revenue: '$520K', companies: 'Miro, +3', panelMentions: 44, panelCustomers: 9, panelRevenue: '$115K', panelCompanies: ['Various', '+3'], panelSummary: 'Large organizations run multiple product boards in parallel. A rollup view would aggregate insights across boards, giving leadership a portfolio-level view of customer demand.' },
+  { summary: 'REST API for programmatic access to insights data…', fullTitle: 'Insights API', status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Brent Tay…', mentions: 16, customers: 10, revenue: '$470K', companies: 'GitHub, +2', panelMentions: 39, panelCustomers: 8, panelRevenue: '$100K', panelCompanies: ['GitHub', 'Vercel', '+1'], panelSummary: 'Technical teams want to pull insights data into their own BI tools and data warehouses. An API would unlock integrations with Looker, Tableau, and custom dashboards without waiting for native connectors.' },
+  { summary: 'Suggest priority ranking based on customer signals…', fullTitle: 'Auto-priority suggestions', status: 'To do', priority: 'Low', assignee: 'Ava Davis', assigner: 'Brent Tay…', mentions: 14, customers: 9, revenue: '$390K', companies: 'Linear, +2', panelMentions: 35, panelCustomers: 7, panelRevenue: '$85K', panelCompanies: ['Linear', 'Height', '+1'], panelSummary: 'PMs spend significant time manually re-ranking items each sprint. Auto-priority would surface a suggested ordering based on a combination of revenue impact, mention velocity, and strategic tags.' },
+  { summary: 'Inline commenting and annotation on insight cards…', fullTitle: 'Team collaboration on insights', status: 'To do', priority: 'Low', assignee: 'Ryan Eldr…', assigner: 'Brent Tay…', mentions: 12, customers: 8, revenue: '$320K', companies: 'Figma, +2', panelMentions: 30, panelCustomers: 6, panelRevenue: '$75K', panelCompanies: ['Figma', 'Miro'], panelSummary: 'Insights are consumed in isolation. Adding inline comments would let PMs and stakeholders discuss specific findings in context, reducing the back-and-forth in separate Slack threads.' },
+  { summary: 'Remove Miro branding from exported reports…', fullTitle: 'White-label report exports', status: 'To do', priority: 'Low', assignee: 'Emily Joh…', assigner: 'Brent Tay…', mentions: 11, customers: 7, revenue: '$280K', companies: 'Enterprise, +1', panelMentions: 28, panelCustomers: 5, panelRevenue: '$65K', panelCompanies: ['Large Enterprise', '+2'], panelSummary: 'Enterprise customers want to present insights reports externally to clients or boards without Miro branding. White-labeling is a table-stakes feature for enterprise deals.' },
+  // Low fidelity (missing context, panelMentions < 28)
+  { summary: 'Mobile experience improvements…', fullTitle: 'Mobile app', status: 'To do', priority: 'Medium', assignee: 'Sophia W…', assigner: 'Chance C…', mentions: 9, customers: 5, revenue: '$180K', companies: 'Various', panelMentions: 22, panelCustomers: 4, panelRevenue: '$50K', panelCompanies: ['Various'], panelSummary: 'Customers have requested mobile access.' },
+  { summary: 'Notification improvements…', fullTitle: 'Notifications', status: 'To do', priority: 'Low', assignee: 'Olivia Br…', assigner: 'Chance C…', mentions: 8, customers: 5, revenue: '$150K', companies: 'Various', panelMentions: 19, panelCustomers: 4, panelRevenue: '$42K', panelCompanies: ['Various'], panelSummary: 'Users want better notifications.' },
+  { summary: 'Improve performance across the app…', fullTitle: 'Performance optimisation', status: 'To do', priority: 'Medium', assignee: 'Ava Davis', assigner: 'Chance C…', mentions: 7, customers: 4, revenue: '$120K', companies: 'Various', panelMentions: 17, panelCustomers: 3, panelRevenue: '$38K', panelCompanies: ['Various'], panelSummary: 'App feels slow sometimes.' },
+  { summary: 'Search functionality…', fullTitle: 'Global search', status: 'To do', priority: 'Medium', assignee: 'Ryan Eldr…', assigner: 'Chance C…', mentions: 6, customers: 4, revenue: '$100K', companies: 'Various', panelMentions: 15, panelCustomers: 3, panelRevenue: '$32K', panelCompanies: ['Various'], panelSummary: 'Search needs work.' },
+  { summary: 'Dark mode for the interface…', fullTitle: 'Dark mode', status: 'To do', priority: 'Low', assignee: 'Emily Joh…', assigner: 'Brent Tay…', mentions: 6, customers: 4, revenue: '$90K', companies: 'Various', panelMentions: 14, panelCustomers: 3, panelRevenue: '$28K', panelCompanies: ['Various'], panelSummary: '' },
+  { summary: 'Settings and preferences page…', fullTitle: 'Settings page redesign', status: 'To do', priority: 'Low', assignee: 'Sophia W…', assigner: 'Brent Tay…', mentions: 5, customers: 3, revenue: '$75K', companies: 'Various', panelMentions: 12, panelCustomers: 2, panelRevenue: '$22K', panelCompanies: ['Various'], panelSummary: '' },
+  { summary: 'Integration work…', fullTitle: 'Integrations', status: 'To do', priority: 'Low', assignee: 'Olivia Br…', assigner: 'Brent Tay…', mentions: 5, customers: 3, revenue: '$65K', companies: 'Various', panelMentions: 11, panelCustomers: 2, panelRevenue: '$19K', panelCompanies: ['Various'], panelSummary: '' },
+  { summary: 'Export features…', fullTitle: 'Export', status: 'To do', priority: 'Low', assignee: 'Ava Davis', assigner: 'Brent Tay…', mentions: 4, customers: 3, revenue: '$55K', companies: 'Various', panelMentions: 10, panelCustomers: 2, panelRevenue: '$16K', panelCompanies: ['Various'], panelSummary: '' },
+  { summary: 'Onboarding flow for new users…', fullTitle: 'Onboarding flow', status: 'To do', priority: 'Medium', assignee: 'Ryan Eldr…', assigner: 'Brent Tay…', mentions: 4, customers: 2, revenue: '$45K', companies: 'Various', panelMentions: 9, panelCustomers: 2, panelRevenue: '$13K', panelCompanies: ['Various'], panelSummary: '' },
+  { summary: 'Accessibility improvements…', fullTitle: 'Accessibility', status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Brent Tay…', mentions: 3, customers: 2, revenue: '$35K', companies: 'Various', panelMentions: 7, panelCustomers: 1, panelRevenue: '$10K', panelCompanies: ['Various'], panelSummary: '' },
+]
+miroInsightsRows.forEach((row, i) => { row.feedback = generateFeedback(i + 25) })
 
 // ── Row context menu ─────────────────────────────────────────
 function RowMenu({ rowIndex, onOpenPanel, onClose }) {
@@ -1259,7 +1295,7 @@ function SidePanel({ row, onClose }) {
   )
 }
 
-function EnrichedTableView({ enriching, onOpenPanel, panelRow }) {
+function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows }) {
   const [hoveredRow, setHoveredRow] = useState(null)
   const [menuRow, setMenuRow] = useState(null)
   const cols = ['Status', 'Priority', 'Assignee', 'Assigner', 'Mentions', 'Customers', 'Est. Revenue', 'Companies']
@@ -1283,7 +1319,7 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow }) {
           </tr>
         </thead>
         <tbody>
-          {tableRows.map((row, i) => (
+          {rows.map((row, i) => (
             <tr
               key={i}
               className={panelRow === i ? 'row-selected' : ''}
