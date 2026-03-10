@@ -122,6 +122,25 @@ function generateFakeFeedback(itemId, count = 10) {
   }))
 }
 
+// ── Row context menu for roadmap left panel ─────────────────
+function RdmRowMenu({ item, onOpenPanel, onClose, onIndent, onOutdent }) {
+  const menuItem = (icon, label, onClick, highlight) => (
+    <div className={`row-ctx-item${highlight ? ' row-ctx-item--highlight' : ''}`} onClick={() => { onClick?.(); onClose() }}>
+      <span className="row-ctx-icon">{icon}</span> {label}
+    </div>
+  )
+  return (
+    <div className="row-ctx-menu rdm-row-ctx-menu" onMouseLeave={onClose}>
+      {menuItem(<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3"/><line x1="4" y1="5" x2="10" y2="5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/><line x1="4" y1="7.5" x2="10" y2="7.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/><line x1="4" y1="10" x2="7" y2="10" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/></svg>, 'Open side panel', onOpenPanel, true)}
+      {menuItem(<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h10a1 1 0 011 1v6a1 1 0 01-1 1H5l-3 2V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>, 'Comments', onOpenPanel)}
+      {menuItem(<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5l1.5 3 3.5.5-2.5 2.5.6 3.5L7 9.5l-3.1 1.5.6-3.5L2 5l3.5-.5L7 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>, 'Enrichment', onOpenPanel)}
+      <div className="row-ctx-divider" />
+      {menuItem(<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="8" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="8" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="4" y="2" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M3.5 8V6.5H7v-1M10.5 8V6.5H7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>, 'Add child', onIndent)}
+      {menuItem(<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="2" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="4" y="8" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M3.5 6v1.5H7v1M10.5 6v1.5H7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>, 'Add parent', onOutdent)}
+    </div>
+  )
+}
+
 // ── Inline SidePanel for Roadmap ───────────────────────────
 function RoadmapSidePanel({ item, groupColor, onClose }) {
   const [tab, setTab] = useState('Insights')
@@ -311,6 +330,8 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome }) {
   // Drag-to-nest state
   const [dragging, setDragging] = useState(null)  // { itemId, groupId }
   const [dragOver, setDragOver] = useState(null)   // itemId
+  const [hoveredItem, setHoveredItem] = useState(null)
+  const [menuItem, setMenuItem] = useState(null)
 
   // Scroll to today on mount
   useEffect(() => {
@@ -651,6 +672,7 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome }) {
                     outline: dragOver === item.id ? '2px dashed #4262FF' : undefined,
                     outlineOffset: dragOver === item.id ? '-2px' : undefined,
                     paddingLeft: isChild ? 44 : undefined,
+                    position: 'relative',
                   }}
                   draggable
                   onDragStart={(e) => handleDragStart(e, item.id, g.id)}
@@ -658,25 +680,30 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome }) {
                   onDrop={(e) => handleDrop(e, item.id, g.id)}
                   onDragLeave={() => setDragOver(null)}
                   onDragEnd={handleDragEnd}
+                  onMouseEnter={() => setHoveredItem(item.id)}
+                  onMouseLeave={() => { setHoveredItem(null); setMenuItem(null) }}
                 >
-                  {!isChild && (
-                    <div className="rdm-nest-btns">
-                      <button className="rdm-nest-btn" onClick={() => indentItem(item.id)} title="Indent">→</button>
-                      <button className="rdm-nest-btn" onClick={() => outdentItem(item.id)} title="Outdent">←</button>
-                    </div>
-                  )}
-                  {isChild && (
-                    <span style={{ marginRight: 6, color: '#bbb', fontSize: 10, flexShrink: 0 }}>•</span>
-                  )}
-                  {isParentWithKids && (
-                    <span style={{ marginRight: 4, color: '#666', fontSize: 11, flexShrink: 0 }}>▾</span>
-                  )}
-                  <span
-                    className="rdm-item-name"
-                    style={{ paddingLeft: item.name.startsWith('  ') ? 12 : 0 }}
-                  >
-                    {item.name.trim()}
-                  </span>
+                  <div className="rdm-row-num-cell">
+                    {menuItem === item.id ? (
+                      <RdmRowMenu
+                        item={item}
+                        onOpenPanel={() => { setPanelItem(item); setMenuItem(null) }}
+                        onClose={() => setMenuItem(null)}
+                        onIndent={() => indentItem(item.id)}
+                        onOutdent={() => outdentItem(item.id)}
+                      />
+                    ) : null}
+                    {hoveredItem === item.id ? (
+                      <button className="row-menu-btn" onClick={() => setMenuItem(item.id)}>•••</button>
+                    ) : (
+                      isChild
+                        ? <span style={{ color: '#bbb', fontSize: 10 }}>•</span>
+                        : isParentWithKids
+                          ? <span style={{ color: '#666', fontSize: 11 }}>▾</span>
+                          : null
+                    )}
+                  </div>
+                  <span className="rdm-item-name">{item.name.trim()}</span>
                 </div>
               )
             }

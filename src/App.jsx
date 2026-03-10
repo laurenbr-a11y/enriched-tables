@@ -917,15 +917,35 @@ const miroInsightsRows = [
 miroInsightsRows.forEach((row, i) => { row.feedback = generateFeedback(i + 25) })
 
 // ── Row context menu ─────────────────────────────────────────
-function RowMenu({ rowIndex, onOpenPanel, onClose }) {
+function RowMenu({ rowIndex, onOpenPanel, onClose, onOpenComments, onOpenInsights }) {
+  const item = (icon, label, onClick, highlight) => (
+    <div className={`row-ctx-item${highlight ? ' row-ctx-item--highlight' : ''}`} onClick={() => { onClick?.(); onClose() }}>
+      <span className="row-ctx-icon">{icon}</span> {label}
+    </div>
+  )
   return (
     <div className="row-ctx-menu" onMouseLeave={onClose}>
-      <div className="row-ctx-item" onClick={() => { onOpenPanel(rowIndex); onClose() }}>
-        <span className="row-ctx-icon">⊟</span> Open side panel
-      </div>
-      <div className="row-ctx-item"><span className="row-ctx-icon">✎</span> Edit</div>
-      <div className="row-ctx-item"><span className="row-ctx-icon">⊕</span> Insert row above</div>
-      <div className="row-ctx-item"><span className="row-ctx-icon">⊕</span> Insert row below</div>
+      {item(
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.3"/><line x1="4" y1="5" x2="10" y2="5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/><line x1="4" y1="7.5" x2="10" y2="7.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/><line x1="4" y1="10" x2="7" y2="10" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/></svg>,
+        'Open side panel', () => onOpenPanel(rowIndex), true
+      )}
+      {item(
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2h10a1 1 0 011 1v6a1 1 0 01-1 1H5l-3 2V3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
+        'Comments', () => { onOpenPanel(rowIndex); onOpenComments?.() }
+      )}
+      {item(
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5l1.5 3 3.5.5-2.5 2.5.6 3.5L7 9.5l-3.1 1.5.6-3.5L2 5l3.5-.5L7 1.5z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></svg>,
+        'Enrichment', () => { onOpenPanel(rowIndex); onOpenInsights?.() }
+      )}
+      <div className="row-ctx-divider" />
+      {item(
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="8" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="8" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="4" y="2" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M3.5 8V6.5H7v-1M10.5 8V6.5H7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+        'Add child'
+      )}
+      {item(
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="2" width="5" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="4" y="8" width="6" height="4" rx="1" stroke="currentColor" strokeWidth="1.2"/><path d="M3.5 6v1.5H7v1M10.5 6v1.5H7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+        'Add parent'
+      )}
     </div>
   )
 }
