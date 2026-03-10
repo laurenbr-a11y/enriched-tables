@@ -399,3 +399,88 @@
 .sync-radio-sub { font-size: 12px; color: #888; }
 .sync-actions { display: flex; gap: 10px; justify-content: flex-end; }
 .sync-cta { display: flex; align-items: center; gap: 6px; padding: 10px 22px; font-size: 14px; font-weight: 600; }
+
+/* ── Roadmap view ─────────────────────────────────────────── */
+.roadmap-page { height: 100vh; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+
+/* Topbar */
+.rdm-topbar { height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #fff; border-bottom: 1px solid #e8e8e8; flex-shrink: 0; z-index: 10; }
+
+/* Secondary toolbar */
+.rdm-toolbar { height: 44px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; flex-shrink: 0; gap: 8px; }
+.rdm-synced-btn { display: flex; align-items: center; gap: 6px; background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.rdm-colorby-btn { font-size: 12px; font-weight: 600; }
+
+/* Main layout */
+.roadmap-layout { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+/* Left panel */
+.rdm-left { width: 280px; flex-shrink: 0; border-right: 1px solid #e0e0e0; overflow-y: auto; background: #fff; }
+
+/* Right scrollable */
+.rdm-right-wrap { flex: 1; overflow-x: auto; overflow-y: auto; }
+.rdm-timeline { display: flex; flex-direction: column; }
+
+/* Month header */
+.rdm-month-header { position: sticky; top: 0; background: #fff; z-index: 10; border-bottom: 1px solid #e8e8e8; }
+.rdm-months-row { display: flex; }
+.rdm-month-cell { flex-shrink: 0; padding: 8px 12px; border-right: 1px solid #f0f0f0; font-size: 13px; color: #666; font-weight: 500; height: 56px; display: flex; align-items: center; box-sizing: border-box; }
+
+/* Grid */
+.rdm-grid { position: relative; }
+.rdm-month-line { position: absolute; top: 0; bottom: 0; width: 1px; background: #f0f0f0; pointer-events: none; }
+.rdm-today-line { position: absolute; top: 0; bottom: 0; width: 1px; border-left: 2px dashed #555; z-index: 5; pointer-events: none; }
+.rdm-today-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; position: absolute; top: -4px; left: -5px; }
+.rdm-today-label { position: absolute; top: 2px; left: 6px; font-size: 10px; font-weight: 600; color: #555; white-space: nowrap; }
+
+/* Grid rows */
+.rdm-grid-group-row { background: #fafafa; border-bottom: 1px solid #eee; }
+.rdm-grid-item-row { border-bottom: 1px solid #f5f5f5; position: relative; }
+.rdm-grid-item-row:hover { background: #f9f9f9; }
+
+/* Bars */
+.rdm-bar { position: absolute; height: 28px; top: 8px; border-radius: 5px; display: flex; align-items: center; padding: 0 8px; cursor: pointer; overflow: hidden; white-space: nowrap; color: #fff; font-size: 12px; gap: 6px; box-sizing: border-box; transition: filter 0.1s; }
+.rdm-bar:hover { filter: brightness(1.1); box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.rdm-bar-label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; min-width: 0; }
+.rdm-bar-dates { font-size: 10px; opacity: .85; flex-shrink: 0; }
+
+/* Parent bar */
+.rdm-parent-bar { position: absolute; height: 12px; top: 18px; border-radius: 3px; opacity: .7; pointer-events: none; }
+
+/* Ghost bar */
+.rdm-ghost-bar { position: absolute; height: 28px; top: 8px; border-radius: 5px; background: rgba(100,100,200,.18); border: 1px dashed #8888cc; pointer-events: none; box-sizing: border-box; }
+
+/* New bar highlight */
+.rdm-bar-new { animation: pulse-yellow 2s ease; }
+@keyframes pulse-yellow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 214, 0, 0.8); }
+  40% { box-shadow: 0 0 0 8px rgba(255, 214, 0, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 214, 0, 0); }
+}
+
+/* Conflict badge */
+.rdm-conflict-badge { position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; background: #ff5252; color: #fff; border-radius: 50%; font-size: 9px; display: flex; align-items: center; justify-content: center; z-index: 10; pointer-events: none; }
+
+/* Dependency SVG */
+.dep-arrow-svg { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
+
+/* Left panel rows */
+.rdm-header-cell { height: 56px; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid #eee; border-right: 1px solid #e0e0e0; box-sizing: border-box; position: sticky; top: 0; background: #fff; z-index: 5; }
+.rdm-group-row { display: flex; align-items: center; gap: 8px; padding: 0 8px; background: #fafafa; border-bottom: 1px solid #eee; box-sizing: border-box; }
+.rdm-group-label { color: #fff; padding: 3px 10px; border-radius: 4px; font-size: 13px; font-weight: 600; }
+.rdm-item-row { display: flex; align-items: center; padding: 0 12px 0 24px; border-bottom: 1px solid #f5f5f5; position: relative; box-sizing: border-box; }
+.rdm-item-row:hover .rdm-nest-btns { display: flex; }
+.rdm-nest-btns { display: none; position: absolute; left: 4px; gap: 2px; align-items: center; }
+.rdm-nest-btn { width: 18px; height: 18px; border: 1px solid #e0e0e0; border-radius: 3px; background: #fff; color: #666; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+.rdm-nest-btn:hover { background: #f0f0f0; }
+.rdm-item-name { font-size: 13px; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.rdm-expand-btn { width: 20px; height: 20px; border: none; background: none; color: #666; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; }
+.rdm-add-btn { width: 22px; height: 22px; border: 1px solid #ddd; border-radius: 4px; color: #888; cursor: pointer; background: #fff; margin-left: auto; flex-shrink: 0; font-size: 16px; display: flex; align-items: center; justify-content: center; padding: 0; }
+.rdm-add-btn:hover { background: #f5f5f5; color: #4262FF; border-color: #4262FF; }
+
+/* Bar popover */
+.bar-popover { position: fixed; z-index: 500; background: #fff; border-radius: 10px; box-shadow: 0 8px 30px rgba(0,0,0,.15); padding: 16px; width: 280px; }
+.bar-popover-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #1a1a2e; }
+.bar-popover-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; flex-wrap: wrap; }
+.bar-popover-input { border: 1px solid #ddd; border-radius: 5px; padding: 4px 8px; width: 70px; font-size: 13px; }
+.bar-popover-confirm { font-size: 11px; color: #2e7d32; margin-top: 2px; }

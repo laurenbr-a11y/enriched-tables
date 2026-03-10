@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
+import RoadmapView from './Roadmap'
 
 // ── Steps ──────────────────────────────────────────────────
 // 0: Home
@@ -11,6 +12,7 @@ import './App.css'
 // 6: Enrichment confirm modal
 // 7: Enrichment start (table + toast)
 // 8: Enriched table (columns filled)
+// 9: Roadmap view
 
 export default function App() {
   const [step, setStep] = useState(0)
@@ -27,7 +29,8 @@ export default function App() {
       {step === 5 && <JiraSyncSetup onNext={next} onSkip={() => goto(6)} />}
       {step === 6 && <EnrichConfirm onNext={next} onSkip={() => goto(7)} />}
       {step === 7 && <EnrichmentStart onNext={next} />}
-      {step === 8 && <EnrichedTable onRestart={() => goto(0)} />}
+      {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} />}
+      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} />}
     </div>
   )
 }
@@ -62,10 +65,10 @@ function MiroLogo() {
   )
 }
 
-function Sidebar({ active }) {
+function Sidebar({ active = 'Backlog', onNav = () => {} }) {
   const items = [
     { icon: '⊞', label: 'Overview' },
-    { icon: '▤', label: 'Backlog', active: true },
+    { icon: '▤', label: 'Backlog' },
     { icon: '↔', label: 'Roadmap' },
     { icon: '✦', label: 'AI Suggestions' },
     { icon: '💬', label: 'Ideas' },
@@ -78,7 +81,12 @@ function Sidebar({ active }) {
       </div>
       <div className="sidebar-section-label">Roadmap Planning</div>
       {items.map(it => (
-        <div key={it.label} className={`sidebar-item ${it.active ? 'active' : ''}`}>
+        <div
+          key={it.label}
+          className={`sidebar-item ${it.label === active ? 'active' : ''}`}
+          onClick={() => onNav(it.label)}
+          style={{ cursor: 'pointer' }}
+        >
           <span className="sidebar-icon">{it.icon}</span>
           {it.label}
         </div>
@@ -674,14 +682,14 @@ function EnrichmentStart({ onNext }) {
 }
 
 // ── SCREEN 7: Enriched table ─────────────────────────────────
-function EnrichedTable({ onRestart }) {
+function EnrichedTable({ onRestart, onGoRoadmap }) {
   const [panelRow, setPanelRow] = useState(null)
 
   return (
     <div className="board-screen">
       <MiroTopbar showBoard title="Product Roadmap" />
       <div className="board-body">
-        <Sidebar />
+        <Sidebar active="Backlog" onNav={(label) => { if (label === 'Roadmap' && onGoRoadmap) onGoRoadmap() }} />
         <div className="board-content">
           <div className="board-toolbar">
             <span className="toolbar-icon">↺</span><span className="toolbar-icon">▤</span>
