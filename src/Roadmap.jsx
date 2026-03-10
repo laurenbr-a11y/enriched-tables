@@ -22,7 +22,7 @@ const GROUP_COLORS = ['#7B5EA7', '#5B9BD5', '#4CAF50']
 const LIGHT_COLORS = ['#C5B8E8', '#A8CFEF', '#A8DFBA']
 
 const PRIORITY_COLORS = { High: '#E53935', Medium: '#FB8C00', Low: '#43A047' }
-const STATUS_COLORS = { Done: '#43A047', 'In Progress': '#1E88E5', 'To do': '#9E9E9E' }
+const STATUS_COLORS = { Done: '#43A047', 'In Progress': '#1E88E5', 'To Do': '#9E9E9E', 'To do': '#9E9E9E' }
 
 const INITIAL_GROUPS = [
   { id: 'g1', name: 'Authentication', colorIndex: 0, expanded: true, items: [
@@ -120,6 +120,42 @@ function generateFakeFeedback(itemId, count = 10) {
     date: ['1 week ago', '2 weeks ago', '1 month ago', '3 months ago'][i % 4],
     source: ['Call', 'Ticket', 'Message'][i % 3],
   }))
+}
+
+// ── Convert backlog rows → Gantt groups ─────────────────────
+function rowsToGroups(rows) {
+  const nonIdea = rows.filter(r => r.status !== 'Idea')
+  const byPri = {
+    High: nonIdea.filter(r => r.priority === 'High'),
+    Medium: nonIdea.filter(r => r.priority === 'Medium'),
+    Low: nonIdea.filter(r => !r.priority || r.priority === 'Low'),
+  }
+  let counter = 0
+  const toItem = (row) => {
+    const i = counter++
+    const s = row.status
+    let startOff, dur
+    if (s === 'Done') {
+      startOff = (i * 6) % 42; dur = 14 + (i % 3) * 7
+    } else if (s === 'In Progress') {
+      startOff = 32 + (i * 9) % 28; dur = 21 + (i % 4) * 7
+    } else {
+      startOff = 58 + (i * 11) % 52; dur = 14 + (i % 5) * 7
+    }
+    return {
+      id: 'br' + (i + 100),
+      name: (row.fullTitle || row.summary || 'Item').replace(/[…\.]+$/, '').trim().slice(0, 40),
+      start: addDays('2026-01-01', startOff),
+      end: addDays('2026-01-01', startOff + Math.min(dur, 55)),
+      priority: row.priority || 'Medium',
+      status: s, effort: dur, deps: [], parentId: null,
+    }
+  }
+  return [
+    byPri.High.length  && { id: 'g1', name: 'High Priority',   colorIndex: 0, expanded: true, items: byPri.High.map(toItem) },
+    byPri.Medium.length && { id: 'g2', name: 'Medium Priority', colorIndex: 1, expanded: true, items: byPri.Medium.map(toItem) },
+    byPri.Low.length   && { id: 'g3', name: 'Low Priority',    colorIndex: 2, expanded: true, items: byPri.Low.map(toItem) },
+  ].filter(Boolean)
 }
 
 // ── Row context menu for roadmap left panel ─────────────────
@@ -317,8 +353,8 @@ function BarPopover({ item, groupColor, pos, onClose, onUpdateItem, onOpenPanel 
 }
 
 // ── Main RoadmapView ───────────────────────────────────────
-export default function RoadmapView({ onGoBacklog, spaceName, onGoHome }) {
-  const [groups, setGroups] = useState(INITIAL_GROUPS)
+export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogRows }) {
+  const [groups, setGroups] = useState(() => backlogRows ? rowsToGroups(backlogRows) : INITIAL_GROUPS)
   const [colorMode, setColorMode] = useState('Group') // Group | Priority | Status
   const [popover, setPopover] = useState(null) // { item, groupColor, pos }
   const [panelItem, setPanelItem] = useState(null) // item for side panel

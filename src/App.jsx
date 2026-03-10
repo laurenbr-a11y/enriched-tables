@@ -32,9 +32,9 @@ export default function App() {
       {step === 6 && <EnrichConfirm onNext={next} onSkip={() => goto(7)} />}
       {step === 7 && <EnrichmentStart onNext={next} />}
       {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} spaceName={spaceName} onGoHome={goHome} />}
-      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} />}
+      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} backlogRows={tableRows} />}
       {step === 10 && <EnrichedTable rows={miroInsightsRows} spaceName="Miro Insights Roadmap" onGoHome={goHome} onRestart={() => goto(0)} onGoRoadmap={() => goto(11)} />}
-      {step === 11 && <RoadmapView spaceName="Miro Insights Roadmap" onGoHome={goHome} onGoBacklog={() => goto(10)} />}
+      {step === 11 && <RoadmapView spaceName="Miro Insights Roadmap" onGoHome={goHome} onGoBacklog={() => goto(10)} backlogRows={miroInsightsRows} />}
     </div>
   )
 }
@@ -880,8 +880,9 @@ const tableRows = [
   { summary: 'Support staff, I need to create a guide on…', fullTitle: 'Compile feedback from stakeholders on the authentication experience.', status: 'To do', priority: 'Medium', assignee: 'Olivia Br…', assigner: 'Chance C…', mentions: 4, customers: 3, revenue: '$80K', companies: 'Intercom', panelMentions: 10, panelCustomers: 2, panelRevenue: '$25K', panelCompanies: ['Intercom'], panelSummary: 'Support volume around authentication has increased 40% QoQ. Most tickets relate to locked accounts and session management confusion. A self-service unlock flow would reduce load.' },
 ]
 
-// Pre-generate feedback for each row
-tableRows.forEach((row, i) => { row.feedback = generateFeedback(i) })
+// Assign varied statuses and feedback to tableRows
+const TABLE_STATUSES = ['Done','Done','In Progress','In Progress','To Do','To Do','To Do','Idea','Idea','To Do','To Do','To Do']
+tableRows.forEach((row, i) => { row.status = TABLE_STATUSES[i] || 'To Do'; row.feedback = generateFeedback(i) })
 
 const miroInsightsRows = [
   // High fidelity (good context, panelMentions >= 70)
@@ -914,7 +915,8 @@ const miroInsightsRows = [
   { summary: 'Onboarding flow for new users…', fullTitle: 'Onboarding flow', status: 'To do', priority: 'Medium', assignee: 'Ryan Eldr…', assigner: 'Brent Tay…', mentions: 4, customers: 2, revenue: '$45K', companies: 'Various', panelMentions: 9, panelCustomers: 2, panelRevenue: '$13K', panelCompanies: ['Various'], panelSummary: '' },
   { summary: 'Accessibility improvements…', fullTitle: 'Accessibility', status: 'To do', priority: 'Medium', assignee: 'Emily Joh…', assigner: 'Brent Tay…', mentions: 3, customers: 2, revenue: '$35K', companies: 'Various', panelMentions: 7, panelCustomers: 1, panelRevenue: '$10K', panelCompanies: ['Various'], panelSummary: '' },
 ]
-miroInsightsRows.forEach((row, i) => { row.feedback = generateFeedback(i + 25) })
+const INSIGHTS_STATUSES = ['In Progress','In Progress','Done','Done','In Progress','To Do','In Progress','To Do','To Do','To Do','To Do','To Do','Idea','To Do','Idea','To Do','Idea','Idea','To Do','To Do','Idea','Idea','To Do','To Do','To Do']
+miroInsightsRows.forEach((row, i) => { row.status = INSIGHTS_STATUSES[i] || row.status; row.feedback = generateFeedback(i + 25) })
 
 // ── Row context menu ─────────────────────────────────────────
 function RowMenu({ rowIndex, onOpenPanel, onClose, onOpenComments, onOpenInsights }) {
@@ -1314,6 +1316,13 @@ function SidePanel({ row, onClose }) {
   )
 }
 
+const statusClass = (s) => {
+  if (s === 'Done') return 'status-tag status-done'
+  if (s === 'In Progress') return 'status-tag status-inprogress'
+  if (s === 'Idea') return 'status-tag status-idea'
+  return 'status-tag'
+}
+
 function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows }) {
   const [hoveredRow, setHoveredRow] = useState(null)
   const [menuRow, setMenuRow] = useState(null)
@@ -1358,7 +1367,7 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
                 </div>
               </td>
               <td className="summary-col">{row.summary}</td>
-              <td><span className="status-tag">{row.status}</span></td>
+              <td><span className={statusClass(row.status)}>{row.status}</span></td>
               <td><span className={`priority-badge p-${row.priority.toLowerCase()}`}>{row.priority}</span></td>
               <td><span className="avatar av-row">{row.assignee[0]}</span> {row.assignee}</td>
               <td><span className="avatar av-row">{row.assigner[0]}</span> {row.assigner}</td>
