@@ -26,21 +26,21 @@ const STATUS_COLORS = { Done: '#43A047', 'In Progress': '#1E88E5', 'To do': '#9E
 
 const INITIAL_GROUPS = [
   { id: 'g1', name: 'Authentication', colorIndex: 0, expanded: true, items: [
-    { id: 'r1', name: 'Login UI Design',    start: '2026-01-05', end: '2026-01-25', priority: 'High',   status: 'Done',        effort: 15, deps: [] },
-    { id: 'r2', name: 'Registration Flow',  start: '2026-01-15', end: '2026-02-10', priority: 'High',   status: 'In Progress', effort: 20, deps: ['r1'] },
-    { id: 'r3', name: 'Password Recovery',  start: '2026-02-01', end: '2026-02-22', priority: 'High',   status: 'In Progress', effort: 14, deps: ['r2'] },
-    { id: 'r4', name: 'MFA Implementation', start: '2026-02-15', end: '2026-03-20', priority: 'High',   status: 'To do',       effort: 28, deps: ['r1'] },
+    { id: 'r1', name: 'Login UI Design',    start: '2026-01-05', end: '2026-01-25', priority: 'High',   status: 'Done',        effort: 15, deps: [], parentId: null },
+    { id: 'r2', name: 'Registration Flow',  start: '2026-01-15', end: '2026-02-10', priority: 'High',   status: 'In Progress', effort: 20, deps: ['r1'], parentId: null },
+    { id: 'r3', name: 'Password Recovery',  start: '2026-02-01', end: '2026-02-22', priority: 'High',   status: 'In Progress', effort: 14, deps: ['r2'], parentId: null },
+    { id: 'r4', name: 'MFA Implementation', start: '2026-02-15', end: '2026-03-20', priority: 'High',   status: 'To do',       effort: 28, deps: ['r1'], parentId: null },
   ]},
   { id: 'g2', name: 'Core Experience', colorIndex: 1, expanded: true, items: [
-    { id: 'r5', name: 'User Dashboard',    start: '2026-01-08', end: '2026-02-14', priority: 'High',   status: 'In Progress', effort: 30, deps: [] },
-    { id: 'r6', name: 'Backlog View',      start: '2026-02-01', end: '2026-03-15', priority: 'High',   status: 'In Progress', effort: 35, deps: ['r5'] },
-    { id: 'r7', name: 'Roadmap View',      start: '2026-03-01', end: '2026-04-30', priority: 'Medium', status: 'To do',       effort: 45, deps: ['r6'] },
-    { id: 'r8', name: 'API Documentation', start: '2026-03-15', end: '2026-04-15', priority: 'Medium', status: 'To do',       effort: 20, deps: [] },
+    { id: 'r5', name: 'User Dashboard',    start: '2026-01-08', end: '2026-02-14', priority: 'High',   status: 'In Progress', effort: 30, deps: [], parentId: null },
+    { id: 'r6', name: 'Backlog View',      start: '2026-02-01', end: '2026-03-15', priority: 'High',   status: 'In Progress', effort: 35, deps: ['r5'], parentId: null },
+    { id: 'r7', name: 'Roadmap View',      start: '2026-03-01', end: '2026-04-30', priority: 'Medium', status: 'To do',       effort: 45, deps: ['r6'], parentId: null },
+    { id: 'r8', name: 'API Documentation', start: '2026-03-15', end: '2026-04-15', priority: 'Medium', status: 'To do',       effort: 20, deps: [], parentId: null },
   ]},
   { id: 'g3', name: 'Integrations', colorIndex: 2, expanded: true, items: [
-    { id: 'r9',  name: 'Jira Sync',       start: '2026-02-15', end: '2026-03-31', priority: 'High',   status: 'To do', effort: 35, deps: [] },
-    { id: 'r10', name: 'CSV Import',      start: '2026-03-01', end: '2026-03-31', priority: 'Medium', status: 'To do', effort: 20, deps: ['r9'] },
-    { id: 'r11', name: 'Webhook Support', start: '2026-04-01', end: '2026-05-15', priority: 'Low',    status: 'To do', effort: 35, deps: ['r9'] },
+    { id: 'r9',  name: 'Jira Sync',       start: '2026-02-15', end: '2026-03-31', priority: 'High',   status: 'To do', effort: 35, deps: [], parentId: null },
+    { id: 'r10', name: 'CSV Import',      start: '2026-03-01', end: '2026-03-31', priority: 'Medium', status: 'To do', effort: 20, deps: ['r9'], parentId: null },
+    { id: 'r11', name: 'Webhook Support', start: '2026-04-01', end: '2026-05-15', priority: 'Low',    status: 'To do', effort: 35, deps: ['r9'], parentId: null },
   ]},
 ]
 
@@ -308,6 +308,10 @@ export default function RoadmapView({ onGoBacklog }) {
   const rightRef = useRef(null)
   let idCounter = useRef(100)
 
+  // Drag-to-nest state
+  const [dragging, setDragging] = useState(null)  // { itemId, groupId }
+  const [dragOver, setDragOver] = useState(null)   // itemId
+
   // Scroll to today on mount
   useEffect(() => {
     if (rightRef.current) {
@@ -316,16 +320,23 @@ export default function RoadmapView({ onGoBacklog }) {
     }
   }, [])
 
-  // Flat list of all items with y-positions for dependency arrows
+  // ── Flat list of all items with y-positions (with nesting) ──
   const flatRows = []
   let yOffset = 0
   groups.forEach(g => {
     flatRows.push({ type: 'group', group: g, y: yOffset })
     yOffset += GROUP_HEIGHT
     if (g.expanded) {
-      g.items.forEach(item => {
-        flatRows.push({ type: 'item', item, group: g, y: yOffset })
+      const roots = g.items.filter(i => !i.parentId)
+      const getKids = (pid) => g.items.filter(i => i.parentId === pid)
+      roots.forEach(item => {
+        const kids = getKids(item.id)
+        flatRows.push({ type: 'item', item, group: g, y: yOffset, depth: 0, childCount: kids.length })
         yOffset += ROW_HEIGHT
+        kids.forEach(child => {
+          flatRows.push({ type: 'item', item: child, group: g, y: yOffset, depth: 1 })
+          yOffset += ROW_HEIGHT
+        })
       })
     }
   })
@@ -365,7 +376,7 @@ export default function RoadmapView({ onGoBacklog }) {
     const id = 'r' + (++idCounter.current)
     const start = TODAY.toISOString().slice(0, 10)
     const end = addDays(start, 14)
-    const newItem = { id, name: 'New item', start, end, priority: 'Medium', status: 'To do', effort: 14, deps: [] }
+    const newItem = { id, name: 'New item', start, end, priority: 'Medium', status: 'To do', effort: 14, deps: [], parentId: null }
     setGroups(prev => prev.map(g => g.id === gId ? { ...g, items: [...g.items, newItem] } : g))
     setNewBarId(id)
     setTimeout(() => setNewBarId(null), 2500)
@@ -383,7 +394,7 @@ export default function RoadmapView({ onGoBacklog }) {
     const clickDate = xToDate(x).toISOString().slice(0, 10)
     const id = 'r' + (++idCounter.current)
     const end = addDays(clickDate, 14)
-    const newItem = { id, name: 'New item', start: clickDate, end, priority: 'Medium', status: 'To do', effort: 14, deps: [] }
+    const newItem = { id, name: 'New item', start: clickDate, end, priority: 'Medium', status: 'To do', effort: 14, deps: [], parentId: null }
     setGroups(prev => prev.map(g => g.id === gId ? { ...g, items: [...g.items, newItem] } : g))
     setNewBarId(id)
     setTimeout(() => setNewBarId(null), 2500)
@@ -408,7 +419,80 @@ export default function RoadmapView({ onGoBacklog }) {
     setColorMode(m => m === 'Group' ? 'Priority' : m === 'Priority' ? 'Status' : 'Group')
   }
 
-  // Dependency SVG arrows
+  // ── Drag-to-nest handlers ──────────────────────────────────
+  const handleDragStart = (e, itemId, groupId) => {
+    setDragging({ itemId, groupId })
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e, itemId) => {
+    e.preventDefault()
+    if (dragging && dragging.itemId !== itemId) {
+      setDragOver(itemId)
+    }
+  }
+
+  const handleDrop = (e, targetItemId, targetGroupId) => {
+    e.preventDefault()
+    if (!dragging) return
+    const { itemId: draggedId, groupId: draggedGroupId } = dragging
+
+    if (draggedId === targetItemId) {
+      setDragging(null)
+      setDragOver(null)
+      return
+    }
+
+    // Find target item — don't allow nesting if target is already a child
+    let targetItem = null
+    for (const g of groups) {
+      const found = g.items.find(i => i.id === targetItemId)
+      if (found) { targetItem = found; break }
+    }
+    if (!targetItem) { setDragging(null); setDragOver(null); return }
+
+    // Don't allow dropping onto a child (B already has a parentId)
+    if (targetItem.parentId) {
+      setDragging(null)
+      setDragOver(null)
+      return
+    }
+
+    // Don't allow dropping a parent-item onto one of its own children
+    // (targetItemId must not be a child of draggedId)
+    let draggedItem = null
+    for (const g of groups) {
+      const found = g.items.find(i => i.id === draggedId)
+      if (found) { draggedItem = found; break }
+    }
+    if (draggedItem && draggedItem.parentId === null) {
+      // draggedId is a root; check if targetItemId is one of its children
+      for (const g of groups) {
+        const isChild = g.items.some(i => i.id === targetItemId && i.parentId === draggedId)
+        if (isChild) {
+          setDragging(null)
+          setDragOver(null)
+          return
+        }
+      }
+    }
+
+    // Set dragged item's parentId = targetItemId
+    setGroups(prev => prev.map(g => ({
+      ...g,
+      items: g.items.map(it => it.id === draggedId ? { ...it, parentId: targetItemId } : it),
+    })))
+
+    setDragging(null)
+    setDragOver(null)
+  }
+
+  const handleDragEnd = () => {
+    setDragging(null)
+    setDragOver(null)
+  }
+
+  // ── Dependency SVG arrows (pre-computed paths) ─────────────
   const depArrows = []
   flatRows.forEach(row => {
     if (row.type !== 'item') return
@@ -421,14 +505,24 @@ export default function RoadmapView({ onGoBacklog }) {
       const srcY = depRow.y + ROW_HEIGHT / 2
       const tgtX1 = dateToX(parseDate(item.start))
       const tgtY = row.y + ROW_HEIGHT / 2
-      const conflict = parseDate(srcItem.end) > parseDate(item.start)
+      const conflict = srcX2 >= tgtX1
       const color = conflict ? '#E53935' : '#bbb'
-      const midX = srcX2 + 20
-      depArrows.push({ srcX2, srcY, midX, tgtX1, tgtY, color, conflict, itemId: item.id })
+
+      let d
+      if (!conflict) {
+        // Non-conflict: source ends before target starts, route right then down then right
+        d = `M ${srcX2},${srcY} L ${srcX2 + 14},${srcY} L ${srcX2 + 14},${tgtY} L ${tgtX1},${tgtY}`
+      } else {
+        // Conflict: bars overlap, route below both bars to avoid crossing bar content
+        const belowY = Math.max(depRow.y, row.y) + ROW_HEIGHT - 6
+        d = `M ${srcX2},${srcY} L ${srcX2 + 14},${srcY} L ${srcX2 + 14},${belowY} L ${tgtX1 - 14},${belowY} L ${tgtX1 - 14},${tgtY} L ${tgtX1},${tgtY}`
+      }
+
+      depArrows.push({ d, color, conflict, itemId: item.id })
     })
   })
 
-  // Compute parent bars
+  // ── Compute parent bars (all items including children) ─────
   const parentBars = groups.map(g => {
     if (!g.expanded || g.items.length === 0) return null
     const starts = g.items.map(i => parseDate(i.start))
@@ -492,29 +586,63 @@ export default function RoadmapView({ onGoBacklog }) {
             <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>Items</span>
           </div>
 
-          {groups.map((g) => (
-            <div key={g.id}>
-              {/* Group row */}
-              <div className="rdm-group-row" style={{ height: GROUP_HEIGHT }}>
-                <button className="rdm-expand-btn" onClick={() => toggleGroup(g.id)}>
-                  {g.expanded ? '▾' : '▸'}
-                </button>
-                <span
-                  className="rdm-group-label"
-                  style={{ background: GROUP_COLORS[g.colorIndex] }}
-                >
-                  {g.name}
-                </span>
-                <button className="rdm-add-btn" onClick={() => addItem(g.id)}>+</button>
-              </div>
-
-              {/* Item rows */}
-              {g.expanded && g.items.map(item => (
-                <div key={item.id} className="rdm-item-row" style={{ height: ROW_HEIGHT }}>
-                  <div className="rdm-nest-btns">
-                    <button className="rdm-nest-btn" onClick={() => indentItem(item.id)} title="Indent">→</button>
-                    <button className="rdm-nest-btn" onClick={() => outdentItem(item.id)} title="Outdent">←</button>
+          {flatRows.map((flatRow, idx) => {
+            if (flatRow.type === 'group') {
+              const g = flatRow.group
+              return (
+                <div key={g.id}>
+                  <div className="rdm-group-row" style={{ height: GROUP_HEIGHT }}>
+                    <button className="rdm-expand-btn" onClick={() => toggleGroup(g.id)}>
+                      {g.expanded ? '▾' : '▸'}
+                    </button>
+                    <span
+                      className="rdm-group-label"
+                      style={{ background: GROUP_COLORS[g.colorIndex] }}
+                    >
+                      {g.name}
+                    </span>
+                    <button className="rdm-add-btn" onClick={() => addItem(g.id)}>+</button>
                   </div>
+                </div>
+              )
+            }
+
+            if (flatRow.type === 'item') {
+              const { item, group: g, depth, childCount } = flatRow
+              const isChild = depth === 1
+              const isParentWithKids = depth === 0 && childCount > 0
+
+              return (
+                <div
+                  key={item.id}
+                  className={`rdm-item-row${isChild ? ' rdm-item-row--child' : ''}`}
+                  style={{
+                    height: ROW_HEIGHT,
+                    opacity: dragging?.itemId === item.id ? 0.4 : 1,
+                    background: dragOver === item.id ? '#e8f0fe' : undefined,
+                    outline: dragOver === item.id ? '2px dashed #4262FF' : undefined,
+                    outlineOffset: dragOver === item.id ? '-2px' : undefined,
+                    paddingLeft: isChild ? 44 : undefined,
+                  }}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, item.id, g.id)}
+                  onDragOver={(e) => handleDragOver(e, item.id)}
+                  onDrop={(e) => handleDrop(e, item.id, g.id)}
+                  onDragLeave={() => setDragOver(null)}
+                  onDragEnd={handleDragEnd}
+                >
+                  {!isChild && (
+                    <div className="rdm-nest-btns">
+                      <button className="rdm-nest-btn" onClick={() => indentItem(item.id)} title="Indent">→</button>
+                      <button className="rdm-nest-btn" onClick={() => outdentItem(item.id)} title="Outdent">←</button>
+                    </div>
+                  )}
+                  {isChild && (
+                    <span style={{ marginRight: 6, color: '#bbb', fontSize: 10, flexShrink: 0 }}>•</span>
+                  )}
+                  {isParentWithKids && (
+                    <span style={{ marginRight: 4, color: '#666', fontSize: 11, flexShrink: 0 }}>▾</span>
+                  )}
                   <span
                     className="rdm-item-name"
                     style={{ paddingLeft: item.name.startsWith('  ') ? 12 : 0 }}
@@ -522,9 +650,11 @@ export default function RoadmapView({ onGoBacklog }) {
                     {item.name.trim()}
                   </span>
                 </div>
-              ))}
-            </div>
-          ))}
+              )
+            }
+
+            return null
+          })}
         </div>
 
         {/* Right panel — scrollable timeline */}
@@ -558,106 +688,153 @@ export default function RoadmapView({ onGoBacklog }) {
                 <div className="rdm-today-label">Today</div>
               </div>
 
-              {/* Row backgrounds + bars */}
-              {groups.map((g, gi) => {
-                const pb = parentBars[gi]
-                const groupRowData = flatRows.find(r => r.type === 'group' && r.group.id === g.id)
-                const groupY = groupRowData ? groupRowData.y : 0
+              {/* Row backgrounds + bars — iterate flatRows for correct y positions */}
+              {(() => {
+                // Group rows (backgrounds + parent bars)
+                const groupEls = groups.map((g, gi) => {
+                  const pb = parentBars[gi]
+                  const groupRowData = flatRows.find(r => r.type === 'group' && r.group.id === g.id)
+                  const groupY = groupRowData ? groupRowData.y : 0
 
-                return (
-                  <div key={g.id}>
-                    {/* Group row background */}
-                    <div
-                      className="rdm-grid-group-row"
-                      style={{ position: 'absolute', top: groupY, left: 0, right: 0, height: GROUP_HEIGHT }}
-                    >
-                      {/* Parent bar */}
-                      {pb && g.expanded && (() => {
-                        const x1 = dateToX(pb.minStart)
-                        const x2 = dateToX(pb.maxEnd)
-                        return (
-                          <div
-                            className="rdm-parent-bar"
-                            style={{
-                              left: x1,
-                              width: Math.max(4, x2 - x1),
-                              background: GROUP_COLORS[g.colorIndex],
-                            }}
-                          />
-                        )
-                      })()}
+                  return (
+                    <div key={g.id + '-grp'}>
+                      {/* Group row background */}
+                      <div
+                        className="rdm-grid-group-row"
+                        style={{ position: 'absolute', top: groupY, left: 0, right: 0, height: GROUP_HEIGHT }}
+                      >
+                        {/* Parent bar spanning all group items */}
+                        {pb && g.expanded && (() => {
+                          const x1 = dateToX(pb.minStart)
+                          const x2 = dateToX(pb.maxEnd)
+                          return (
+                            <div
+                              className="rdm-parent-bar"
+                              style={{
+                                left: x1,
+                                width: Math.max(4, x2 - x1),
+                                background: GROUP_COLORS[g.colorIndex],
+                              }}
+                            />
+                          )
+                        })()}
+                      </div>
                     </div>
+                  )
+                })
 
-                    {/* Item rows */}
-                    {g.expanded && g.items.map(item => {
-                      const itemRowData = flatRows.find(r => r.type === 'item' && r.item.id === item.id)
-                      const itemY = itemRowData ? itemRowData.y : 0
-                      const x1 = dateToX(parseDate(item.start))
-                      const x2 = dateToX(parseDate(item.end))
-                      const barW = Math.max(4, x2 - x1)
+                // Item rows (bars)
+                const itemEls = flatRows.filter(r => r.type === 'item').map(flatRow => {
+                  const { item, group: g, y: itemY, depth, childCount } = flatRow
+                  const isChild = depth === 1
+                  const isParentWithKids = depth === 0 && (childCount || 0) > 0
+
+                  // For parent items with children, show spanning bar instead of regular bar
+                  if (isParentWithKids) {
+                    // Compute span from all children's dates
+                    const kids = g.items.filter(i => i.parentId === item.id)
+                    if (kids.length > 0) {
+                      const childStarts = kids.map(k => parseDate(k.start))
+                      const childEnds = kids.map(k => parseDate(k.end))
+                      const minStart = new Date(Math.min(...childStarts))
+                      const maxEnd = new Date(Math.max(...childEnds))
+                      const spanX1 = dateToX(minStart)
+                      const spanX2 = dateToX(maxEnd)
+                      const spanW = Math.max(4, spanX2 - spanX1)
                       const barColor = getBarColor(item, g)
-                      const hasConflict = depArrows.some(a => a.itemId === item.id && a.conflict)
 
                       return (
                         <div
                           key={item.id}
                           className="rdm-grid-item-row"
-                          style={{ position: 'absolute', top: itemY, left: 0, right: 0, height: ROW_HEIGHT, cursor: 'crosshair' }}
-                          onClick={(e) => {
-                            if (!e.target.closest('.rdm-bar')) {
-                              handleRowClick(e, g.id, e.currentTarget)
-                            }
-                          }}
-                          onMouseMove={(e) => {
-                            if (e.target.closest('.rdm-bar')) {
-                              setGhostBar(null)
-                              return
-                            }
-                            const rect = e.currentTarget.getBoundingClientRect()
-                            const x = e.clientX - rect.left + (rightRef.current?.scrollLeft || 0)
-                            const snappedDate = xToDate(x)
-                            const ghostX = dateToX(snappedDate)
-                            const ghostEnd = new Date(snappedDate)
-                            ghostEnd.setDate(ghostEnd.getDate() + 7)
-                            const ghostW = dateToX(ghostEnd) - ghostX
-                            setGhostBar({ rowId: item.id, x: ghostX, width: ghostW })
-                          }}
-                          onMouseLeave={() => setGhostBar(null)}
+                          style={{ position: 'absolute', top: itemY, left: 0, right: 0, height: ROW_HEIGHT, cursor: 'default' }}
                         >
-                          {/* Ghost bar */}
-                          {ghostBar && ghostBar.rowId === item.id && (
-                            <div
-                              className="rdm-ghost-bar"
-                              style={{ left: ghostBar.x, width: ghostBar.width }}
-                            />
-                          )}
-
-                          {/* Main bar */}
+                          {/* Spanning parent bar */}
                           <div
-                            className={`rdm-bar${newBarId === item.id ? ' rdm-bar-new' : ''}`}
-                            style={{ left: x1, width: barW, background: barColor, position: 'absolute' }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setPopover({ item, groupColor: GROUP_COLORS[g.colorIndex], pos: { x: e.clientX, y: e.clientY } })
+                            style={{
+                              position: 'absolute',
+                              left: spanX1,
+                              width: spanW,
+                              height: 12,
+                              top: 18,
+                              borderRadius: 3,
+                              background: barColor,
+                              opacity: 0.65,
+                              pointerEvents: 'none',
                             }}
-                          >
-                            <span className="rdm-bar-label">{item.name.trim()}</span>
-                            {barW > 120 && (
-                              <span className="rdm-bar-dates">{formatDate(item.start)}</span>
-                            )}
-                            {barW > 200 && (
-                              <span className="rdm-bar-dates">→ {formatDate(item.end)}</span>
-                            )}
-                            {hasConflict && (
-                              <div className="rdm-conflict-badge">⚠</div>
-                            )}
-                          </div>
+                          />
                         </div>
                       )
-                    })}
-                  </div>
-                )
-              })}
+                    }
+                  }
+
+                  // Regular bar (childless root or child)
+                  const x1 = dateToX(parseDate(item.start))
+                  const x2 = dateToX(parseDate(item.end))
+                  const barW = Math.max(4, x2 - x1)
+                  const barColor = getBarColor(item, g)
+                  const hasConflict = depArrows.some(a => a.itemId === item.id && a.conflict)
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="rdm-grid-item-row"
+                      style={{ position: 'absolute', top: itemY, left: 0, right: 0, height: ROW_HEIGHT, cursor: 'crosshair' }}
+                      onClick={(e) => {
+                        if (!e.target.closest('.rdm-bar')) {
+                          handleRowClick(e, g.id, e.currentTarget)
+                        }
+                      }}
+                      onMouseMove={(e) => {
+                        if (e.target.closest('.rdm-bar')) {
+                          setGhostBar(null)
+                          return
+                        }
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        const x = e.clientX - rect.left + (rightRef.current?.scrollLeft || 0)
+                        const snappedDate = xToDate(x)
+                        const ghostX = dateToX(snappedDate)
+                        const ghostEnd = new Date(snappedDate)
+                        ghostEnd.setDate(ghostEnd.getDate() + 7)
+                        const ghostW = dateToX(ghostEnd) - ghostX
+                        setGhostBar({ rowId: item.id, x: ghostX, width: ghostW })
+                      }}
+                      onMouseLeave={() => setGhostBar(null)}
+                    >
+                      {/* Ghost bar */}
+                      {ghostBar && ghostBar.rowId === item.id && (
+                        <div
+                          className="rdm-ghost-bar"
+                          style={{ left: ghostBar.x, width: ghostBar.width }}
+                        />
+                      )}
+
+                      {/* Main bar */}
+                      <div
+                        className={`rdm-bar${newBarId === item.id ? ' rdm-bar-new' : ''}`}
+                        style={{ left: x1, width: barW, background: barColor, position: 'absolute' }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setPopover({ item, groupColor: GROUP_COLORS[g.colorIndex], pos: { x: e.clientX, y: e.clientY } })
+                        }}
+                      >
+                        <span className="rdm-bar-label">{item.name.trim()}</span>
+                        {barW > 120 && (
+                          <span className="rdm-bar-dates">{formatDate(item.start)}</span>
+                        )}
+                        {barW > 200 && (
+                          <span className="rdm-bar-dates">→ {formatDate(item.end)}</span>
+                        )}
+                        {hasConflict && (
+                          <div className="rdm-conflict-badge">⚠</div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })
+
+                return [...groupEls, ...itemEls]
+              })()}
 
               {/* Dependency SVG arrows */}
               <svg
@@ -674,11 +851,10 @@ export default function RoadmapView({ onGoBacklog }) {
                 </defs>
                 {depArrows.map((a, i) => {
                   const markerId = a.conflict ? 'arrowhead-red' : 'arrowhead'
-                  const d = `M ${a.srcX2},${a.srcY} H ${a.midX} V ${a.tgtY} H ${a.tgtX1}`
                   return (
                     <path
                       key={i}
-                      d={d}
+                      d={a.d}
                       fill="none"
                       stroke={a.color}
                       strokeWidth="1.5"

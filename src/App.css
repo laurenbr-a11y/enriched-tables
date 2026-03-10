@@ -484,3 +484,9 @@
 .bar-popover-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; flex-wrap: wrap; }
 .bar-popover-input { border: 1px solid #ddd; border-radius: 5px; padding: 4px 8px; width: 70px; font-size: 13px; }
 .bar-popover-confirm { font-size: 11px; color: #2e7d32; margin-top: 2px; }
+
+/* Drag-to-nest styles */
+.rdm-item-row--child { padding-left: 44px !important; }
+.rdm-item-row--child::before { content: ''; position: absolute; left: 28px; top: 0; bottom: 0; width: 1px; background: #e0e0e0; }
+.rdm-item-row[data-dragging='true'] { opacity: 0.4; }
+.rdm-item-row[data-dragover='true'] { background: #e8f0fe !important; outline: 2px dashed #4262FF; outline-offset: -2px; }
