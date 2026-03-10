@@ -1043,7 +1043,9 @@ function FeedbackFilter({ filters, onChange }) {
 function SidePanel({ row, onClose }) {
   const [tab, setTab] = useState('Insights')
   const [filters, setFilters] = useState({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })
-  const [sort, setSort] = useState('Latest')
+  const [sort, setSort] = useState('newest')
+
+  const DATE_ORDER = ['1 week ago','2 weeks ago','3 weeks ago','1 month ago','6 weeks ago','2 months ago','3 months ago','4 months ago']
 
   const visibleFeedback = row.feedback.filter(f => {
     if (filters.sources.size > 0 && !filters.sources.has(f.source)) return false
@@ -1058,6 +1060,9 @@ function SidePanel({ row, onClose }) {
       if (icMatch.length > 0 && !icMatch.includes(f.interviewCycle)) return false
     }
     return true
+  }).sort((a, b) => {
+    const ai = DATE_ORDER.indexOf(a.date), bi = DATE_ORDER.indexOf(b.date)
+    return sort === 'newest' ? ai - bi : bi - ai
   })
 
   const activeFilterCount = Object.values(filters).reduce((s, set) => s + set.size, 0)
@@ -1129,9 +1134,8 @@ function SidePanel({ row, onClose }) {
                 <div className="sp-feedback-controls">
                   <div className="sp-sort-select-wrap">
                     <select className="sp-sort-select" value={sort} onChange={e => setSort(e.target.value)}>
-                      <option>Latest</option>
-                      <option>Oldest</option>
-                      <option>Most critical</option>
+                      <option value="newest">Newest first</option>
+                      <option value="oldest">Oldest first</option>
                     </select>
                   </div>
                   <FeedbackFilter filters={filters} onChange={setFilters} />
