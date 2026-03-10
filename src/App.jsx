@@ -19,19 +19,23 @@ export default function App() {
   const [step, setStep] = useState(0)
   const [spaceName, setSpaceName] = useState(null)
   const [teamContext, setTeamContext] = useState('')
+  const [hasMiroInsights, setHasMiroInsights] = useState(true)
   const next = () => setStep(s => s + 1)
   const goto = (n) => setStep(n)
   const goHome = () => goto(0)
 
   return (
     <div className="app">
-      {step === 0 && <HomeScreen onNext={next} spaceName={spaceName} onOpenSpace={() => goto(spaceName ? 3 : 1)} onOpenMiroInsights={() => goto(10)} />}
+      {step === 0 && <HomeScreen onNext={next} spaceName={spaceName} onOpenSpace={() => goto(spaceName ? 3 : 1)} onOpenMiroInsights={() => goto(10)} hasMiroInsights={hasMiroInsights} onToggleMiroInsights={() => setHasMiroInsights(v => !v)} />}
       {step === 1 && <TemplatesScreen onNext={next} onBack={() => goto(0)} />}
       {step === 2 && <BlueprintDetail onNext={(name) => { setSpaceName(name); next() }} onBack={() => goto(1)} />}
       {step === 3 && <BacklogEmpty onNext={next} spaceName={spaceName} onGoHome={goHome} />}
       {step === 4 && <JiraImport onNext={next} onClose={() => goto(3)} />}
       {step === 5 && <JiraSyncSetup onNext={next} onSkip={() => goto(6)} />}
-      {step === 6 && <EnrichConfirm onNext={next} onSkip={() => goto(7)} />}
+      {step === 6 && (hasMiroInsights
+        ? <EnrichConfirm onNext={next} onSkip={() => goto(7)} />
+        : <InsightsUpsell onMaybeLater={() => goto(3)} />
+      )}
       {step === 7 && <EnrichmentStart onNext={next} />}
       {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} spaceName={spaceName} onGoHome={goHome} teamContext={teamContext} onUpdateContext={setTeamContext} />}
       {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} backlogRows={tableRows} PanelComponent={SidePanel} teamContext={teamContext} onUpdateContext={setTeamContext} />}
@@ -126,7 +130,7 @@ function Overlay({ children, onClose }) {
 }
 
 // ── SCREEN 0: Home ──────────────────────────────────────────
-function HomeScreen({ onNext, spaceName, onOpenSpace, onOpenMiroInsights }) {
+function HomeScreen({ onNext, spaceName, onOpenSpace, onOpenMiroInsights, hasMiroInsights, onToggleMiroInsights }) {
   const boards = [
     { icon: '📋', name: 'Miro Insights Roadmap', mod: 'Today', space: 'Miro Insights…', owner: 'Lauren Brucato', badge: 'Internal', clickable: true },
     { icon: '💡', name: 'Insights: Onboarding Journey Map', mod: 'Today', space: 'Miro Insights…', owner: 'Holly Rankin', badge: 'Internal' },
@@ -164,6 +168,15 @@ function HomeScreen({ onNext, spaceName, onOpenSpace, onOpenMiroInsights }) {
             {spaceName}
           </div>
         )}
+        <div className="home-demo-toggle">
+          <div className="home-demo-label">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#aaa" strokeWidth="1.2"/><path d="M6 4v2.5M6 8v.5" stroke="#aaa" strokeWidth="1.2" strokeLinecap="round"/></svg>
+            Miro Insights
+          </div>
+          <button className={`home-demo-pill${hasMiroInsights ? ' home-demo-pill--on' : ''}`} onClick={onToggleMiroInsights}>
+            <span className="home-demo-thumb" />
+          </button>
+        </div>
       </div>
       <div className="home-main">
         <div className="home-hero">
@@ -686,6 +699,74 @@ function EnrichConfirm({ onNext, onSkip }) {
           <div className="enrich-actions">
             <button className="btn-outline" onClick={onSkip}>Skip for now</button>
             <button className="btn-primary enrich-cta" onClick={onNext}>Enable enrichment</button>
+          </div>
+        </div>
+      </Overlay>
+    </div>
+  )
+}
+
+// ── SCREEN 6b: Insights upsell (org without Miro Insights) ──
+function InsightsUpsell({ onMaybeLater }) {
+  const cols = [
+    { icon: '#', label: 'Mentions', desc: 'Customer references' },
+    { icon: '#', label: 'Customers', desc: 'Accounts impacted' },
+    { icon: '#', label: 'Est. Revenue', desc: 'ARR at stake' },
+    { icon: '≡', label: 'Companies', desc: 'Company names' },
+  ]
+  return (
+    <div className="board-screen">
+      <MiroTopbar showBoard title="Product Roadmap" />
+      <div className="board-body" style={{ filter: 'blur(2px)', pointerEvents: 'none' }}>
+        <Sidebar />
+      </div>
+      <Overlay onClose={() => {}}>
+        <div className="modal enrich-confirm-modal">
+          <div className="enrich-icon-row">
+            <div className="enrich-spark-icon" style={{ background: '#F3EEFF' }}>
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <circle cx="18" cy="18" r="18" fill="#F3EEFF"/>
+                <rect x="11" y="18" width="14" height="10" rx="2.5" fill="#7B5EA7"/>
+                <path d="M13.5 18v-3.5a4.5 4.5 0 019 0V18" stroke="#7B5EA7" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="18" cy="23" r="1.5" fill="#fff"/>
+              </svg>
+            </div>
+          </div>
+          <div className="upsell-badge">Miro Insights · Add-on</div>
+          <h2 className="enrich-title">Unlock Miro Insights for your team</h2>
+          <p className="enrich-desc">
+            Miro Insights automatically enriches your backlog with AI-powered customer signals — surfacing which features matter most, with revenue impact and account coverage. Turn every prioritization decision into an evidence-based one.
+          </p>
+          <div className="enrich-columns-preview">
+            {cols.map(col => (
+              <div key={col.label} className="enrich-col-chip upsell-col-chip">
+                <span className="enrich-col-icon" style={{ color: '#7B5EA7' }}>{col.icon}</span>
+                <div>
+                  <div className="enrich-col-label" style={{ color: '#7B5EA7' }}>{col.label}</div>
+                  <div className="enrich-col-desc">{col.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="upsell-proof">
+            <div className="upsell-proof-item">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5l3 3 6-6" stroke="#7B5EA7" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Trusted by 1,000+ product teams
+            </div>
+            <div className="upsell-proof-item">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5l3 3 6-6" stroke="#7B5EA7" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Syncs automatically — no manual updates
+            </div>
+            <div className="upsell-proof-item">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7.5l3 3 6-6" stroke="#7B5EA7" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Works with your existing Jira backlog
+            </div>
+          </div>
+          <div className="enrich-actions">
+            <button className="btn-outline" onClick={onMaybeLater}>Maybe later</button>
+            <a className="btn-primary enrich-cta upsell-cta" href="https://miro.com/contact/" target="_blank" rel="noreferrer">
+              Request demo →
+            </a>
           </div>
         </div>
       </Overlay>
