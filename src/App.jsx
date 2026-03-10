@@ -7,9 +7,10 @@ import './App.css'
 // 2: Blueprint detail
 // 3: Backlog (empty, import dropdown)
 // 4: Jira import modal
-// 5: Enrichment confirm modal
-// 6: Enrichment start (table + toast)
-// 7: Enriched table (columns filled)
+// 5: Jira sync setup
+// 6: Enrichment confirm modal
+// 7: Enrichment start (table + toast)
+// 8: Enriched table (columns filled)
 
 export default function App() {
   const [step, setStep] = useState(0)
@@ -23,9 +24,10 @@ export default function App() {
       {step === 2 && <BlueprintDetail onNext={next} onBack={() => goto(1)} />}
       {step === 3 && <BacklogEmpty onNext={next} />}
       {step === 4 && <JiraImport onNext={next} onClose={() => goto(3)} />}
-      {step === 5 && <EnrichConfirm onNext={next} onSkip={() => goto(6)} />}
-      {step === 6 && <EnrichmentStart onNext={next} />}
-      {step === 7 && <EnrichedTable onRestart={() => goto(0)} />}
+      {step === 5 && <JiraSyncSetup onNext={next} onSkip={() => goto(6)} />}
+      {step === 6 && <EnrichConfirm onNext={next} onSkip={() => goto(7)} />}
+      {step === 7 && <EnrichmentStart onNext={next} />}
+      {step === 8 && <EnrichedTable onRestart={() => goto(0)} />}
     </div>
   )
 }
@@ -450,7 +452,16 @@ function JiraImport({ onNext, onClose }) {
             </tbody>
           </table>
           <div className="jira-footer">
-            <button className="btn-primary" onClick={onNext}>Import</button>
+            <div className="jira-footer-left">
+              <button className="btn-primary jira-sync-btn" onClick={onNext}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
+                  <path d="M12 7A5 5 0 1 1 7 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                  <path d="M7 2l2.5 2.5L7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Import &amp; sync
+              </button>
+              <button className="btn-outline jira-import-only-btn" onClick={onNext}>Import once</button>
+            </div>
             <div className="import-as-row">
               <span>Import as</span>
               <div className="import-as-select" onClick={() => setShowViewMenu(v => !v)}>
@@ -474,7 +485,99 @@ function JiraImport({ onNext, onClose }) {
   )
 }
 
-// ── SCREEN 5: Enrichment confirmation ───────────────────────
+// ── SCREEN 5: Jira sync setup ────────────────────────────────
+function JiraSyncSetup({ onNext, onSkip }) {
+  const [frequency, setFrequency] = useState('realtime')
+  const [filterScope, setFilterScope] = useState('current')
+
+  return (
+    <div className="board-screen">
+      <MiroTopbar showBoard title="Product Roadmap" />
+      <div className="board-body" style={{ filter: 'blur(2px)', pointerEvents: 'none' }}>
+        <Sidebar />
+      </div>
+      <Overlay onClose={() => {}}>
+        <div className="modal sync-modal">
+          <div className="sync-modal-header">
+            <div className="sync-icon">
+              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                <circle cx="20" cy="20" r="20" fill="#EEF0FF"/>
+                <path d="M28 20A8 8 0 1 1 20 12" stroke="#4262FF" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M20 12l3.5 3.5L20 19" stroke="#4262FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="20" cy="20" r="2.5" fill="#4262FF"/>
+              </svg>
+            </div>
+            <h2 className="sync-title">Keep your backlog in sync with Jira</h2>
+            <p className="sync-desc">
+              New Jira items matching your filter will appear in your backlog automatically — so you never have to import again.
+            </p>
+          </div>
+
+          <div className="sync-filter-preview">
+            <div className="sync-filter-label">Syncing from</div>
+            <div className="sync-filter-pill">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" style={{flexShrink:0}}>
+                <rect width="20" height="20" rx="4" fill="#0052CC"/>
+                <path d="M10 3.5L6 10l4 6.5L14 10 10 3.5z" fill="#fff" opacity=".9"/>
+                <path d="M10 3.5L6 10h8L10 3.5z" fill="#fff"/>
+              </svg>
+              <span>https://miro.atlassian.net</span>
+              <span className="sync-filter-divider">·</span>
+              <span className="sync-filter-query">All open issues · EPC, TSK, BUG</span>
+            </div>
+          </div>
+
+          <div className="sync-options">
+            <div className="sync-option-label">What to sync</div>
+            <div className="sync-radio-group">
+              {[
+                { val: 'current', label: 'Items matching current filter', sub: 'All open issues from EPC-1234, TSK-1234, BUG-1234' },
+                { val: 'all',     label: 'All new items in this project',  sub: 'Any issue created in miro.atlassian.net going forward' },
+              ].map(opt => (
+                <label key={opt.val} className={`sync-radio-item ${filterScope === opt.val ? 'selected' : ''}`}>
+                  <input type="radio" name="scope" value={opt.val} checked={filterScope === opt.val} onChange={() => setFilterScope(opt.val)} />
+                  <div>
+                    <div className="sync-radio-label">{opt.label}</div>
+                    <div className="sync-radio-sub">{opt.sub}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <div className="sync-option-label" style={{marginTop: 16}}>Sync frequency</div>
+            <div className="sync-freq-group">
+              {[
+                { val: 'realtime', label: 'Real-time', sub: 'Items appear as soon as they match' },
+                { val: 'daily',    label: 'Daily',     sub: 'Synced once per day at 9am' },
+              ].map(opt => (
+                <label key={opt.val} className={`sync-radio-item ${frequency === opt.val ? 'selected' : ''}`}>
+                  <input type="radio" name="freq" value={opt.val} checked={frequency === opt.val} onChange={() => setFrequency(opt.val)} />
+                  <div>
+                    <div className="sync-radio-label">{opt.label}</div>
+                    <div className="sync-radio-sub">{opt.sub}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="sync-actions">
+            <button className="btn-outline" onClick={onSkip}>Import without sync</button>
+            <button className="btn-primary sync-cta" onClick={onNext}>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
+                <path d="M12 7A5 5 0 1 1 7 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+                <path d="M7 2l2.5 2.5L7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Enable sync
+            </button>
+          </div>
+        </div>
+      </Overlay>
+    </div>
+  )
+}
+
+// ── SCREEN 6: Enrichment confirmation ───────────────────────
 function EnrichConfirm({ onNext, onSkip }) {
   return (
     <div className="board-screen">
