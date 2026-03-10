@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import RoadmapView from './Roadmap'
+import TeamContextButton from './TeamContextButton'
 
 // ── Steps ──────────────────────────────────────────────────
 // 0: Home
@@ -17,6 +18,7 @@ import RoadmapView from './Roadmap'
 export default function App() {
   const [step, setStep] = useState(0)
   const [spaceName, setSpaceName] = useState(null)
+  const [teamContext, setTeamContext] = useState('')
   const next = () => setStep(s => s + 1)
   const goto = (n) => setStep(n)
   const goHome = () => goto(0)
@@ -31,10 +33,10 @@ export default function App() {
       {step === 5 && <JiraSyncSetup onNext={next} onSkip={() => goto(6)} />}
       {step === 6 && <EnrichConfirm onNext={next} onSkip={() => goto(7)} />}
       {step === 7 && <EnrichmentStart onNext={next} />}
-      {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} spaceName={spaceName} onGoHome={goHome} />}
-      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} backlogRows={tableRows} PanelComponent={SidePanel} />}
-      {step === 10 && <EnrichedTable rows={miroInsightsRows} spaceName="Miro Insights Roadmap" onGoHome={goHome} onRestart={() => goto(0)} onGoRoadmap={() => goto(11)} />}
-      {step === 11 && <RoadmapView spaceName="Miro Insights Roadmap" onGoHome={goHome} onGoBacklog={() => goto(10)} backlogRows={miroInsightsRows} PanelComponent={SidePanel} />}
+      {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} spaceName={spaceName} onGoHome={goHome} teamContext={teamContext} onUpdateContext={setTeamContext} />}
+      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} backlogRows={tableRows} PanelComponent={SidePanel} teamContext={teamContext} onUpdateContext={setTeamContext} />}
+      {step === 10 && <EnrichedTable rows={miroInsightsRows} spaceName="Miro Insights Roadmap" onGoHome={goHome} onRestart={() => goto(0)} onGoRoadmap={() => goto(11)} teamContext={teamContext} onUpdateContext={setTeamContext} />}
+      {step === 11 && <RoadmapView spaceName="Miro Insights Roadmap" onGoHome={goHome} onGoBacklog={() => goto(10)} backlogRows={miroInsightsRows} PanelComponent={SidePanel} teamContext={teamContext} onUpdateContext={setTeamContext} />}
     </div>
   )
 }
@@ -736,7 +738,7 @@ function EnrichmentStart({ onNext }) {
 }
 
 // ── SCREEN 7: Enriched table ─────────────────────────────────
-function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome, rows = tableRows }) {
+function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome, rows = tableRows, teamContext, onUpdateContext }) {
   const [panelRow, setPanelRow] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
@@ -750,6 +752,8 @@ function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome, rows = tab
             <span className="toolbar-icon">↺</span><span className="toolbar-icon">▤</span>
             <span className="toolbar-icon">▽</span><span className="toolbar-icon">↕</span>
             <span className="toolbar-icon">⊞</span><span className="toolbar-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 1.5v8M4.5 4.5l3-3 3 3M2.5 10.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="#555" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
+            <span style={{ width: 1, background: '#e8e8e8', height: 20, margin: '0 6px', flexShrink: 0 }} />
+            <TeamContextButton teamContext={teamContext} onUpdateContext={onUpdateContext} />
           </div>
           <div className="table-panel-layout">
             <EnrichedTableView enriching={false} onOpenPanel={setPanelRow} panelRow={panelRow} rows={rows} />

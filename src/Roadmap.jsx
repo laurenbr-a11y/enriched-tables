@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import TeamContextButton from './TeamContextButton'
 
 // ── Constants ──────────────────────────────────────────────
 const ROW_HEIGHT = 44
@@ -353,7 +354,7 @@ function BarPopover({ item, groupColor, pos, onClose, onUpdateItem, onOpenPanel 
 }
 
 // ── Main RoadmapView ───────────────────────────────────────
-export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogRows, PanelComponent }) {
+export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogRows, PanelComponent, teamContext, onUpdateContext }) {
   const [groups, setGroups] = useState(() => backlogRows ? rowsToGroups(backlogRows) : INITIAL_GROUPS)
   const [colorMode, setColorMode] = useState('Group') // Group | Priority | Status
   const [popover, setPopover] = useState(null) // { item, groupColor, pos }
@@ -636,6 +637,8 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
           <button className="btn-outline-sm">Months ▾</button>
           <span className="toolbar-icon">📅</span>
           <span className="toolbar-icon">⊡</span>
+          <span style={{ width: 1, background: '#e8e8e8', height: 20, margin: '0 4px' }} />
+          <TeamContextButton teamContext={teamContext} onUpdateContext={onUpdateContext} />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button className="btn-outline-sm rdm-colorby-btn" onClick={cycleColorMode}>
