@@ -20,6 +20,7 @@ export default function App() {
   const [spaceName, setSpaceName] = useState(null)
   const [teamContext, setTeamContext] = useState('')
   const [hasMiroInsights, setHasMiroInsights] = useState(true)
+  const [importMethod, setImportMethod] = useState('jira')
   const next = () => setStep(s => s + 1)
   const goto = (n) => setStep(n)
   const goHome = () => goto(0)
@@ -29,9 +30,11 @@ export default function App() {
       {step === 0 && <HomeScreen onNext={next} spaceName={spaceName} onOpenSpace={() => goto(spaceName ? 3 : 1)} onOpenMiroInsights={() => goto(10)} hasMiroInsights={hasMiroInsights} onToggleMiroInsights={() => setHasMiroInsights(v => !v)} />}
       {step === 1 && <TemplatesScreen onNext={next} onBack={() => goto(0)} />}
       {step === 2 && <BlueprintDetail onNext={(name) => { setSpaceName(name); next() }} onBack={() => goto(1)} />}
-      {step === 3 && <BacklogEmpty onNext={next} spaceName={spaceName} onGoHome={goHome} />}
-      {step === 4 && <JiraImport onNext={next} onClose={() => goto(3)} />}
-      {step === 5 && <JiraSyncSetup onNext={next} onSkip={() => goto(6)} />}
+      {step === 3 && <BacklogEmpty onImport={(method) => { setImportMethod(method); goto(4) }} spaceName={spaceName} onGoHome={goHome} />}
+      {step === 4 && (importMethod === 'csv'
+        ? <CsvImport onNext={() => goto(6)} onClose={() => goto(3)} />
+        : <JiraImport onNext={() => goto(6)} onClose={() => goto(3)} />
+      )}
       {step === 6 && (hasMiroInsights
         ? <EnrichConfirm onNext={next} onSkip={() => goto(7)} />
         : <InsightsUpsell onMaybeLater={() => goto(3)} />
@@ -382,7 +385,7 @@ function BlueprintDetail({ onNext, onBack }) {
 }
 
 // ── SCREEN 3: Backlog (empty table, import dropdown) ─────────
-function BacklogEmpty({ onNext, spaceName, onGoHome }) {
+function BacklogEmpty({ onImport, spaceName, onGoHome }) {
   const [showImportMenu, setShowImportMenu] = useState(false)
   const cols = ['Title', 'Description', 'Status', 'Priority', 'Assignee']
   const rows = Array.from({ length: 15 }, (_, i) => i + 1)
@@ -403,7 +406,7 @@ function BacklogEmpty({ onNext, spaceName, onGoHome }) {
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 1.5v8M4.5 4.5l3-3 3 3M2.5 10.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="#555" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {showImportMenu && (
                 <div className="import-dropdown-v2">
-                  <div className="import-option-v2" onClick={onNext}>
+                  <div className="import-option-v2" onClick={() => onImport('jira')}>
                     <div className="import-icon-v2 jira-icon">
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <rect width="20" height="20" rx="4" fill="#0052CC"/>
@@ -414,7 +417,7 @@ function BacklogEmpty({ onNext, spaceName, onGoHome }) {
                     <span className="import-label-v2">Jira</span>
                   </div>
                   <div className="import-divider" />
-                  <div className="import-option-v2 csv-option" onClick={onNext}>
+                  <div className="import-option-v2 csv-option" onClick={() => onImport('csv')}>
                     <div className="import-icon-v2 csv-icon">
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <rect width="20" height="20" rx="4" fill="#f0f0f0"/>
@@ -529,16 +532,6 @@ function JiraImport({ onNext, onClose }) {
             </tbody>
           </table>
           <div className="jira-footer">
-            <div className="jira-footer-left">
-              <button className="btn-primary jira-sync-btn" onClick={onNext}>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
-                  <path d="M12 7A5 5 0 1 1 7 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-                  <path d="M7 2l2.5 2.5L7 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Import &amp; sync
-              </button>
-              <button className="btn-outline jira-import-only-btn" onClick={onNext}>Import once</button>
-            </div>
             <div className="import-as-row">
               <span>Import as</span>
               <div className="import-as-select" onClick={() => setShowViewMenu(v => !v)}>
@@ -555,6 +548,88 @@ function JiraImport({ onNext, onClose }) {
                 )}
               </div>
             </div>
+            <button className="btn-primary jira-import-only-btn" onClick={onNext}>
+              Import{selected.size > 0 ? ` (${selected.size})` : ''}
+            </button>
+          </div>
+        </div>
+      </Overlay>
+    </div>
+  )
+}
+
+// ── SCREEN 4b: CSV import ────────────────────────────────────
+function CsvImport({ onNext, onClose }) {
+  const [file, setFile] = useState(null)
+  const [dragging, setDragging] = useState(false)
+
+  const simulateFile = () => setFile({ name: 'backlog.csv', rows: 24 })
+
+  return (
+    <div className="board-screen">
+      <MiroTopbar showBoard title="Product Roadmap" />
+      <div className="board-body">
+        <Sidebar />
+        <div className="board-content" style={{ filter: 'blur(1px)', pointerEvents: 'none' }} />
+      </div>
+      <Overlay onClose={onClose}>
+        <div className="modal csv-modal">
+          <div className="modal-titlebar">
+            <h2>Import from CSV</h2>
+            <button className="modal-close" onClick={onClose}>✕</button>
+          </div>
+          <div className="csv-body">
+            {!file ? (
+              <div
+                className={`csv-dropzone${dragging ? ' csv-dropzone--over' : ''}`}
+                onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setDragging(false); simulateFile() }}
+                onClick={simulateFile}
+              >
+                <div className="csv-drop-icon">
+                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect x="6" y="4" width="28" height="36" rx="3" fill="#F0F2FF" stroke="#C8D0FF" strokeWidth="1.5"/>
+                    <rect x="10" y="4" width="28" height="36" rx="3" fill="#fff" stroke="#C8D0FF" strokeWidth="1.5"/>
+                    <path d="M18 18h12M18 23h12M18 28h8" stroke="#8896CC" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="36" cy="36" r="9" fill="#4262FF"/>
+                    <path d="M36 31v10M31.5 36.5l4.5 4.5 4.5-4.5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className="csv-drop-title">Drag &amp; drop your CSV file here</div>
+                <div className="csv-drop-or">— or —</div>
+                <button className="btn-outline csv-browse-btn" onClick={(e) => { e.stopPropagation(); simulateFile() }}>
+                  Browse files
+                </button>
+                <div className="csv-format-hint">
+                  <strong>Required columns:</strong> Title, Description &nbsp;·&nbsp; <strong>Optional:</strong> Status, Priority, Assignee
+                </div>
+              </div>
+            ) : (
+              <div className="csv-file-ready">
+                <div className="csv-file-icon">
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect x="2" y="2" width="28" height="28" rx="4" fill="#F0F2FF" stroke="#C8D0FF" strokeWidth="1.5"/>
+                    <path d="M9 13h14M9 17h14M9 21h9" stroke="#4262FF" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div className="csv-file-info">
+                  <div className="csv-file-name">{file.name}</div>
+                  <div className="csv-file-meta">{file.rows} rows detected · Ready to import</div>
+                </div>
+                <button className="csv-file-remove" onClick={() => setFile(null)}>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M2 2l10 10M12 2L2 12" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="csv-footer">
+            <button className="btn-outline" onClick={onClose}>Cancel</button>
+            <button className="btn-primary" disabled={!file} onClick={onNext} style={{ opacity: file ? 1 : 0.4 }}>
+              Import →
+            </button>
           </div>
         </div>
       </Overlay>
