@@ -1115,6 +1115,9 @@ function SidePanel({ row, onClose }) {
   const [tab, setTab] = useState('Insights')
   const [filters, setFilters] = useState({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })
   const [sort, setSort] = useState('newest')
+
+  // Reset to Insights tab whenever the displayed row changes
+  useEffect(() => { setTab('Insights') }, [row])
   const [rejectingIdx, setRejectingIdx] = useState(new Set())
   const [rejectedIdx, setRejectedIdx] = useState(new Set())
   const [rejectReasons, setRejectReasons] = useState({})
@@ -1351,24 +1354,30 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
   const cols = ['Status', 'Priority', 'Assignee', 'Assigner', 'Mentions', 'Customers', 'Est. Revenue', 'Companies']
   const enrichedCols = ['Mentions', 'Customers', 'Est. Revenue', 'Companies']
 
-  const handleLowConfidenceClick = (e) => {
+  const showReadOnly = (e) => {
     e.stopPropagation()
-    const rect = e.currentTarget.getBoundingClientRect()
-    setReadOnlyTip({ x: rect.left, y: rect.bottom + 6 })
-    setTimeout(() => setReadOnlyTip(null), 2200)
+    setReadOnlyTip({ x: e.clientX + 10, y: e.clientY + 14 })
+    setTimeout(() => setReadOnlyTip(null), 1800)
   }
 
-  const enrichedCell = (row, content) => {
+  const enrichedCell = (row, rowIdx, content) => {
     const lowConf = row.panelMentions < 70
     return (
       <td
         className={`enriched-col${lowConf ? ' enriched-col--warn' : ''}`}
-        onClick={lowConf ? handleLowConfidenceClick : undefined}
-        style={lowConf ? { cursor: 'default' } : {}}
+        onClick={showReadOnly}
       >
         {enriching ? <span className="loading-cell" /> : (
           <span className="enriched-cell-inner">
-            {lowConf && <WarnTriangle />}
+            {lowConf && (
+              <span
+                className="cell-warn-icon-wrap"
+                onClick={(e) => { e.stopPropagation(); onOpenPanel(rowIdx) }}
+                title="Low-confidence enrichment — click to view details"
+              >
+                <WarnTriangle />
+              </span>
+            )}
             {content}
           </span>
         )}
@@ -1380,14 +1389,11 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
     <div className="backlog-table-wrap" onClick={() => setReadOnlyTip(null)}>
       {readOnlyTip && (
         <div className="cell-readonly-tip" style={{ left: readOnlyTip.x, top: readOnlyTip.y }}>
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-            <path d="M6.5 1.5L12 11.5H1L6.5 1.5Z" fill="#FFF3CD" stroke="#E6A800" strokeWidth="1.2" strokeLinejoin="round"/>
-            <path d="M6.5 5.5v2.5" stroke="#9A6000" strokeWidth="1.2" strokeLinecap="round"/>
-            <circle cx="6.5" cy="9.5" r="0.6" fill="#9A6000"/>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <rect x="1" y="1" width="10" height="10" rx="2" stroke="#888" strokeWidth="1.3"/>
+            <path d="M4 4.5h4M4 6h2.5" stroke="#888" strokeWidth="1.1" strokeLinecap="round"/>
           </svg>
-          <span>Read only</span>
-          <span className="cell-readonly-sep">·</span>
-          <span>Low-confidence enrichment</span>
+          Read only
         </div>
       )}
       <table className="backlog-table enriched">
@@ -1425,15 +1431,15 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
                   )}
                 </div>
               </td>
-              <td className="summary-col">{row.summary}</td>
-              <td><span className={statusClass(row.status)}>{row.status}</span></td>
-              <td><span className={`priority-badge p-${row.priority.toLowerCase()}`}>{row.priority}</span></td>
-              <td><span className="avatar av-row">{row.assignee[0]}</span> {row.assignee}</td>
-              <td><span className="avatar av-row">{row.assigner[0]}</span> {row.assigner}</td>
-              {enrichedCell(row, <span className="insight-num">{row.mentions}</span>)}
-              {enrichedCell(row, <span className="insight-num">{row.customers}</span>)}
-              {enrichedCell(row, <span className="insight-rev">{row.revenue}</span>)}
-              {enrichedCell(row, <span className="insight-companies">{row.companies}</span>)}
+              <td className="summary-col" onClick={showReadOnly}>{row.summary}</td>
+              <td onClick={showReadOnly}><span className={statusClass(row.status)}>{row.status}</span></td>
+              <td onClick={showReadOnly}><span className={`priority-badge p-${row.priority.toLowerCase()}`}>{row.priority}</span></td>
+              <td onClick={showReadOnly}><span className="avatar av-row">{row.assignee[0]}</span> {row.assignee}</td>
+              <td onClick={showReadOnly}><span className="avatar av-row">{row.assigner[0]}</span> {row.assigner}</td>
+              {enrichedCell(row, i, <span className="insight-num">{row.mentions}</span>)}
+              {enrichedCell(row, i, <span className="insight-num">{row.customers}</span>)}
+              {enrichedCell(row, i, <span className="insight-rev">{row.revenue}</span>)}
+              {enrichedCell(row, i, <span className="insight-companies">{row.companies}</span>)}
               <td />
             </tr>
           ))}
