@@ -1106,6 +1106,34 @@ function SidePanel({ row, onClose }) {
             <div className="sp-section">
               <div className="sp-section-title">Summary</div>
               <p className="sp-summary-text">{row.panelSummary}</p>
+              {(() => {
+                const issue = row.panelMentions >= 70 ? null : row.panelMentions >= 28 ? 'weak' : 'missing'
+                if (!issue) return null
+                if (issue === 'missing') return (
+                  <div className="ctx-callout ctx-callout--error">
+                    <div className="ctx-callout-icon">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#C00" strokeWidth="1.5"/><path d="M8 4.5v4M8 10.5v1" stroke="#C00" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    </div>
+                    <div className="ctx-callout-body">
+                      <div className="ctx-callout-title">Missing Title or Description</div>
+                      <div className="ctx-callout-text">Enrichment requires a clear title and description to match customer feedback. Add context to enable insights for this item.</div>
+                      <button className="ctx-callout-action">Add description →</button>
+                    </div>
+                  </div>
+                )
+                return (
+                  <div className="ctx-callout ctx-callout--warn">
+                    <div className="ctx-callout-icon">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="#9A6000" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 6v3.5M8 11v1" stroke="#9A6000" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    </div>
+                    <div className="ctx-callout-body">
+                      <div className="ctx-callout-title">Low-confidence enrichment</div>
+                      <div className="ctx-callout-text">The title or description may be too brief to reliably match customer feedback. Improving context will increase matching accuracy.</div>
+                      <button className="ctx-callout-action ctx-callout-action--warn">Improve context →</button>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
             <div className="sp-section">
               <div className="sp-section-title">Impact estimates</div>
