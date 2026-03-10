@@ -378,6 +378,21 @@
 .sp-date { font-size: 11px; color: #999; }
 .sp-fb-empty { color: #aaa; font-size: 13px; text-align: center; padding: 24px 0; }
 
+/* ── Feedback reject state ───────────────────────────────── */
+.sp-reject-btn { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 5px; background: none; color: #aaa; cursor: pointer; padding: 0; opacity: 0; transition: opacity 0.1s; }
+.sp-feedback-card:hover .sp-reject-btn { opacity: 1; }
+.sp-reject-btn:hover svg circle, .sp-reject-btn:hover svg line { stroke: #C00; }
+.sp-card-rejecting { border-color: #fcc !important; background: #fff9f9 !important; }
+.sp-reject-icon { margin-bottom: 10px; }
+.sp-reject-msg { font-size: 13px; color: #333; line-height: 1.55; margin-bottom: 12px; }
+.sp-reject-reason { width: 100%; box-sizing: border-box; border: 1px solid #e0e0e0; border-radius: 7px; padding: 8px 10px; font-size: 12px; font-family: inherit; color: #444; resize: none; height: 64px; outline: none; margin-bottom: 12px; }
+.sp-reject-reason:focus { border-color: #C00; }
+.sp-reject-reason::placeholder { color: #bbb; }
+.sp-reject-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.sp-reject-cancel { font-size: 12px; padding: 6px 12px; }
+.sp-reject-confirm { background: #C00; color: #fff; border: none; border-radius: 7px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.sp-reject-confirm:hover { background: #a00; }
+
 /* ── Sync modal ──────────────────────────────────────────── */
 .sync-modal { width: 520px; max-width: 95vw; padding: 32px 32px 28px; }
 .sync-modal-header { text-align: center; margin-bottom: 24px; }

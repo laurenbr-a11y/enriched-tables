@@ -1044,10 +1044,14 @@ function SidePanel({ row, onClose }) {
   const [tab, setTab] = useState('Insights')
   const [filters, setFilters] = useState({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })
   const [sort, setSort] = useState('newest')
+  const [rejectingIdx, setRejectingIdx] = useState(new Set())
+  const [rejectedIdx, setRejectedIdx] = useState(new Set())
+  const [rejectReasons, setRejectReasons] = useState({})
 
   const DATE_ORDER = ['1 week ago','2 weeks ago','3 weeks ago','1 month ago','6 weeks ago','2 months ago','3 months ago','4 months ago']
 
-  const visibleFeedback = row.feedback.filter(f => {
+  const visibleFeedback = row.feedback.map((f, i) => ({ ...f, _idx: i })).filter(f => {
+    if (rejectedIdx.has(f._idx)) return false
     if (filters.sources.size > 0 && !filters.sources.has(f.source)) return false
     if (filters.companies.size > 0 && !filters.companies.has(f.company)) return false
     if (filters.roles.size > 0 && !filters.roles.has(f.role)) return false
@@ -1153,26 +1157,71 @@ function SidePanel({ row, onClose }) {
                 {visibleFeedback.length === 0 && (
                   <div className="sp-fb-empty">No feedback matches the current filters.</div>
                 )}
-                {visibleFeedback.map((f, i) => (
-                  <div key={i} className={`sp-feedback-card sp-card-${f.type.toLowerCase()}`}>
-                    <div className="sp-feedback-top">
-                      <span className={`sp-feedback-type sp-type-${f.type.toLowerCase()}`}>
-                        {f.type === 'Problem' ? 'User problem' : f.type === 'Request' ? 'User request' : 'User praise'} ⓘ
-                      </span>
-                      <button className="sp-fb-more">⋮</button>
+                {visibleFeedback.map((f, i) => {
+                  const idx = f._idx
+                  const isRejecting = rejectingIdx.has(idx)
+
+                  if (isRejecting) {
+                    return (
+                      <div key={i} className="sp-feedback-card sp-card-rejecting">
+                        <div className="sp-reject-icon">
+                          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                            <circle cx="11" cy="11" r="9.5" stroke="#C00" strokeWidth="1.5"/>
+                            <line x1="4.5" y1="4.5" x2="17.5" y2="17.5" stroke="#C00" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <p className="sp-reject-msg">This will remove the feedback segment from enrichment and impact metrics.</p>
+                        <textarea
+                          className="sp-reject-reason"
+                          placeholder="Tell us why you're removing this (optional)"
+                          value={rejectReasons[idx] || ''}
+                          onChange={e => setRejectReasons(prev => ({ ...prev, [idx]: e.target.value }))}
+                        />
+                        <div className="sp-reject-actions">
+                          <button className="btn-outline sp-reject-cancel" onClick={() => {
+                            const n = new Set(rejectingIdx); n.delete(idx); setRejectingIdx(n)
+                          }}>Cancel</button>
+                          <button className="sp-reject-confirm" onClick={() => {
+                            const nr = new Set(rejectedIdx); nr.add(idx)
+                            setRejectedIdx(nr)
+                            const n = new Set(rejectingIdx); n.delete(idx); setRejectingIdx(n)
+                          }}>Remove feedback</button>
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  return (
+                    <div key={i} className={`sp-feedback-card sp-card-${f.type.toLowerCase()}`}>
+                      <div className="sp-feedback-top">
+                        <span className={`sp-feedback-type sp-type-${f.type.toLowerCase()}`}>
+                          {f.type === 'Problem' ? 'User problem' : f.type === 'Request' ? 'User request' : 'User praise'} ⓘ
+                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <button className="sp-reject-btn" title="Reject feedback" onClick={() => {
+                            const n = new Set(rejectingIdx); n.add(idx); setRejectingIdx(n)
+                          }}>
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <circle cx="7" cy="7" r="6" stroke="#aaa" strokeWidth="1.3"/>
+                              <line x1="2.5" y1="2.5" x2="11.5" y2="11.5" stroke="#aaa" strokeWidth="1.3" strokeLinecap="round"/>
+                            </svg>
+                          </button>
+                          <button className="sp-fb-more">⋮</button>
+                        </div>
+                      </div>
+                      <div className="sp-stars">
+                        {[1,2,3,4,5].map(s => <span key={s} className={s <= f.stars ? 'star on' : 'star off'}>★</span>)}
+                      </div>
+                      <div className="sp-quote">{f.quote}</div>
+                      <div className="sp-author-row">{f.author}, {f.company}</div>
+                      <div className="sp-card-footer">
+                        <span className="sp-card-tag sp-date">{f.date}</span>
+                        <span className="sp-card-tag sp-tag-source">{f.source}</span>
+                        <span className="sp-card-tag">{f.role}</span>
+                      </div>
                     </div>
-                    <div className="sp-stars">
-                      {[1,2,3,4,5].map(s => <span key={s} className={s <= f.stars ? 'star on' : 'star off'}>★</span>)}
-                    </div>
-                    <div className="sp-quote">{f.quote}</div>
-                    <div className="sp-author-row">{f.author}, {f.company}</div>
-                    <div className="sp-card-footer">
-                      <span className="sp-card-tag sp-date">{f.date}</span>
-                      <span className="sp-card-tag sp-tag-source">{f.source}</span>
-                      <span className="sp-card-tag">{f.role}</span>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </div>
