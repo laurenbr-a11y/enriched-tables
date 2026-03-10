@@ -1200,7 +1200,6 @@ function SidePanel({ row, onClose }) {
                     <div className="ctx-callout-body">
                       <div className="ctx-callout-title">Low-confidence enrichment</div>
                       <div className="ctx-callout-text">The title or description may be too brief to reliably match customer feedback. Improving context will increase matching accuracy.</div>
-                      <button className="ctx-callout-action ctx-callout-action--warn">Improve context →</button>
                     </div>
                   </div>
                 )
@@ -1337,14 +1336,60 @@ const statusClass = (s) => {
   return 'status-tag'
 }
 
+const WarnTriangle = () => (
+  <svg className="cell-warn-icon" width="13" height="13" viewBox="0 0 13 13" fill="none">
+    <path d="M6.5 1.5L12 11.5H1L6.5 1.5Z" fill="#FFF3CD" stroke="#E6A800" strokeWidth="1.2" strokeLinejoin="round"/>
+    <path d="M6.5 5.5v2.5" stroke="#9A6000" strokeWidth="1.2" strokeLinecap="round"/>
+    <circle cx="6.5" cy="9.5" r="0.6" fill="#9A6000"/>
+  </svg>
+)
+
 function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows }) {
   const [hoveredRow, setHoveredRow] = useState(null)
   const [menuRow, setMenuRow] = useState(null)
+  const [readOnlyTip, setReadOnlyTip] = useState(null) // { x, y }
   const cols = ['Status', 'Priority', 'Assignee', 'Assigner', 'Mentions', 'Customers', 'Est. Revenue', 'Companies']
   const enrichedCols = ['Mentions', 'Customers', 'Est. Revenue', 'Companies']
 
+  const handleLowConfidenceClick = (e) => {
+    e.stopPropagation()
+    const rect = e.currentTarget.getBoundingClientRect()
+    setReadOnlyTip({ x: rect.left, y: rect.bottom + 6 })
+    setTimeout(() => setReadOnlyTip(null), 2200)
+  }
+
+  const enrichedCell = (row, content) => {
+    const lowConf = row.panelMentions < 70
+    return (
+      <td
+        className={`enriched-col${lowConf ? ' enriched-col--warn' : ''}`}
+        onClick={lowConf ? handleLowConfidenceClick : undefined}
+        style={lowConf ? { cursor: 'default' } : {}}
+      >
+        {enriching ? <span className="loading-cell" /> : (
+          <span className="enriched-cell-inner">
+            {lowConf && <WarnTriangle />}
+            {content}
+          </span>
+        )}
+      </td>
+    )
+  }
+
   return (
-    <div className="backlog-table-wrap">
+    <div className="backlog-table-wrap" onClick={() => setReadOnlyTip(null)}>
+      {readOnlyTip && (
+        <div className="cell-readonly-tip" style={{ left: readOnlyTip.x, top: readOnlyTip.y }}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M6.5 1.5L12 11.5H1L6.5 1.5Z" fill="#FFF3CD" stroke="#E6A800" strokeWidth="1.2" strokeLinejoin="round"/>
+            <path d="M6.5 5.5v2.5" stroke="#9A6000" strokeWidth="1.2" strokeLinecap="round"/>
+            <circle cx="6.5" cy="9.5" r="0.6" fill="#9A6000"/>
+          </svg>
+          <span>Read only</span>
+          <span className="cell-readonly-sep">·</span>
+          <span>Low-confidence enrichment</span>
+        </div>
+      )}
       <table className="backlog-table enriched">
         <thead>
           <tr>
@@ -1385,10 +1430,10 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
               <td><span className={`priority-badge p-${row.priority.toLowerCase()}`}>{row.priority}</span></td>
               <td><span className="avatar av-row">{row.assignee[0]}</span> {row.assignee}</td>
               <td><span className="avatar av-row">{row.assigner[0]}</span> {row.assigner}</td>
-              <td className="enriched-col">{enriching ? <span className="loading-cell" /> : <span className="insight-num">{row.mentions}</span>}</td>
-              <td className="enriched-col">{enriching ? <span className="loading-cell" /> : <span className="insight-num">{row.customers}</span>}</td>
-              <td className="enriched-col">{enriching ? <span className="loading-cell" /> : <span className="insight-rev">{row.revenue}</span>}</td>
-              <td className="enriched-col">{enriching ? <span className="loading-cell" /> : <span className="insight-companies">{row.companies}</span>}</td>
+              {enrichedCell(row, <span className="insight-num">{row.mentions}</span>)}
+              {enrichedCell(row, <span className="insight-num">{row.customers}</span>)}
+              {enrichedCell(row, <span className="insight-rev">{row.revenue}</span>)}
+              {enrichedCell(row, <span className="insight-companies">{row.companies}</span>)}
               <td />
             </tr>
           ))}
