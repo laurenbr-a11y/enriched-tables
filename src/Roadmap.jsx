@@ -704,6 +704,7 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
                   onDragEnd={handleDragEnd}
                   onMouseEnter={() => setHoveredItem(item.id)}
                   onMouseLeave={() => { setHoveredItem(null); setMenuItem(null) }}
+                  data-selected={panelItem?.id === item.id ? 'true' : undefined}
                 >
                   <div className="rdm-row-num-cell">
                     {menuItem === item.id ? (
@@ -725,7 +726,10 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
                           : null
                     )}
                   </div>
-                  <span className="rdm-item-name">{item.name.trim()}</span>
+                  <span
+                    className="rdm-item-name rdm-item-name--clickable"
+                    onClick={(e) => { e.stopPropagation(); setPanelItem(item) }}
+                  >{item.name.trim()}</span>
                 </div>
               )
             }
@@ -891,6 +895,7 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
                         style={{ left: x1, width: barW, background: barColor, position: 'absolute' }}
                         onClick={(e) => {
                           e.stopPropagation()
+                          setPanelItem(item)
                           setPopover({ item, groupColor: GROUP_COLORS[g.colorIndex], pos: { x: e.clientX, y: e.clientY } })
                         }}
                       >

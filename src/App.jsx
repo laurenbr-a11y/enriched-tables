@@ -1486,7 +1486,6 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
   const enrichedCols = ['Mentions', 'Customers', 'Est. Revenue', 'Companies']
 
   const showReadOnly = (e) => {
-    e.stopPropagation()
     setReadOnlyTip({ x: e.clientX + 10, y: e.clientY + 14 })
     setTimeout(() => setReadOnlyTip(null), 1800)
   }
@@ -1546,7 +1545,8 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
           {rows.map((row, i) => (
             <tr
               key={i}
-              className={panelRow === i ? 'row-selected' : ''}
+              className={`table-row-clickable${panelRow === i ? ' row-selected' : ''}`}
+              onClick={() => onOpenPanel(i)}
               onMouseEnter={() => setHoveredRow(i)}
               onMouseLeave={() => { setHoveredRow(null); setMenuRow(null) }}
             >
@@ -1556,7 +1556,7 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
                     <RowMenu rowIndex={i} onOpenPanel={onOpenPanel} onClose={() => setMenuRow(null)} />
                   ) : null}
                   {hoveredRow === i ? (
-                    <button className="row-menu-btn" onClick={() => setMenuRow(i)}>•••</button>
+                    <button className="row-menu-btn" onClick={(e) => { e.stopPropagation(); setMenuRow(i) }}>•••</button>
                   ) : (
                     <span className="row-num">{i + 1}</span>
                   )}
