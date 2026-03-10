@@ -374,7 +374,7 @@ function BacklogEmpty({ onNext, spaceName, onGoHome }) {
             <span className="toolbar-icon">↕</span>
             <span className="toolbar-icon">⊞</span>
             <span className="toolbar-icon" style={{ position: 'relative' }} onClick={() => setShowImportMenu(v => !v)}>
-              🔗
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 1.5v8M4.5 4.5l3-3 3 3M2.5 10.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="#555" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
               {showImportMenu && (
                 <div className="import-dropdown-v2">
                   <div className="import-option-v2" onClick={onNext}>
@@ -702,7 +702,7 @@ function EnrichmentStart({ onNext }) {
           <div className="board-toolbar">
             <span className="toolbar-icon">↺</span><span className="toolbar-icon">▤</span>
             <span className="toolbar-icon">▽</span><span className="toolbar-icon">↕</span>
-            <span className="toolbar-icon">⊞</span><span className="toolbar-icon">🔗</span>
+            <span className="toolbar-icon">⊞</span><span className="toolbar-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 1.5v8M4.5 4.5l3-3 3 3M2.5 10.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="#555" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
           </div>
           <div className="table-panel-layout">
             <EnrichedTableView enriching onOpenPanel={setPanelRow} panelRow={panelRow} />
@@ -737,7 +737,7 @@ function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome }) {
           <div className="board-toolbar">
             <span className="toolbar-icon">↺</span><span className="toolbar-icon">▤</span>
             <span className="toolbar-icon">▽</span><span className="toolbar-icon">↕</span>
-            <span className="toolbar-icon">⊞</span><span className="toolbar-icon">🔗</span>
+            <span className="toolbar-icon">⊞</span><span className="toolbar-icon"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 1.5v8M4.5 4.5l3-3 3 3M2.5 10.5v2a1 1 0 001 1h8a1 1 0 001-1v-2" stroke="#555" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
           </div>
           <div className="table-panel-layout">
             <EnrichedTableView enriching={false} onOpenPanel={setPanelRow} panelRow={panelRow} />
@@ -1163,7 +1163,7 @@ function SidePanel({ row, onClose }) {
                     <div className="sp-quote">{f.quote}</div>
                     <div className="sp-author-row">{f.author}, {f.company}</div>
                     <div className="sp-card-footer">
-                      <span className="sp-card-tag">📅 {f.date}</span>
+                      <span className="sp-card-tag sp-date">{f.date}</span>
                       <span className="sp-card-tag sp-tag-source">{f.source}</span>
                       <span className="sp-card-tag">{f.role}</span>
                     </div>

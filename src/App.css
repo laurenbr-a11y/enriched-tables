@@ -320,10 +320,10 @@
 .sp-type-request { background: #E8F0FF; color: #4262FF; }
 .sp-fb-more { color: #aaa; font-size: 16px; cursor: pointer; }
 .sp-stars { display: flex; gap: 2px; margin-bottom: 8px; }
-.star { font-size: 14px; }
-.star.on { color: #F5A623; }
-.star.off { color: #ddd; }
-.sp-quote { font-size: 13px; color: #333; line-height: 1.55; background: #fff8f0; border-left: 3px solid #F5A623; padding: 8px 10px; border-radius: 4px; margin-bottom: 8px; }
+.star { font-size: 13px; }
+.star.on { color: #4262FF; }
+.star.off { color: #e0e0e0; }
+.sp-quote { font-size: 13px; color: #333; line-height: 1.6; padding: 0; margin-bottom: 8px; font-style: italic; }
 .sp-author { font-size: 12px; font-weight: 600; color: #333; }
 .sp-date { font-size: 11px; color: #999; }
 
@@ -363,20 +363,20 @@
 .sp-filter-chip button { background: none; color: #4262FF; font-size: 11px; cursor: pointer; padding: 0; line-height: 1; }
 
 /* Updated feedback cards */
-.sp-feedback-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fff; }
-.sp-card-problem { }
-.sp-card-request { }
-.sp-card-praise { }
-.sp-feedback-type { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; }
+.sp-feedback-card { border: 1px solid #e8e8e8; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; background: #fff; }
+.sp-feedback-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.sp-feedback-type { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; flex-shrink: 0; }
 .sp-type-problem { background: #FFE8E8; color: #C00; }
-.sp-type-request { background: #FFF3CC; color: #8A5C00; }
+.sp-type-request { background: #E8F0FF; color: #4262FF; }
 .sp-type-praise { background: #E3F9E5; color: #1A7A3C; }
-.sp-author-row { font-size: 12px; color: #555; margin-bottom: 8px; }
-.sp-card-footer { display: flex; flex-wrap: wrap; gap: 5px; }
-.sp-card-tag { font-size: 11px; color: #666; background: #f0f0f0; padding: 2px 7px; border-radius: 10px; }
-.sp-tag-source { background: #EEF0FF; color: #4262FF; }
+.sp-stars { display: flex; gap: 3px; margin-bottom: 8px; }
+.sp-quote { font-size: 13px; color: #333; line-height: 1.6; margin-bottom: 8px; font-style: italic; }
+.sp-author-row { font-size: 12px; color: #777; margin-bottom: 10px; }
+.sp-card-footer { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.sp-card-tag { font-size: 11px; color: #555; background: #f2f2f2; padding: 3px 8px; border-radius: 10px; }
+.sp-tag-source { background: #EEF0FF; color: #4262FF; font-weight: 500; }
+.sp-date { font-size: 11px; color: #999; }
 .sp-fb-empty { color: #aaa; font-size: 13px; text-align: center; padding: 24px 0; }
-.sp-quote { font-size: 13px; color: #333; line-height: 1.55; padding: 8px 0; margin-bottom: 4px; font-style: italic; }
 
 /* ── Sync modal ──────────────────────────────────────────── */
 .sync-modal { width: 520px; max-width: 95vw; padding: 32px 32px 28px; }
