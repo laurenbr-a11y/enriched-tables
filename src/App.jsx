@@ -16,21 +16,24 @@ import RoadmapView from './Roadmap'
 
 export default function App() {
   const [step, setStep] = useState(0)
+  const [spaceName, setSpaceName] = useState(null)
   const next = () => setStep(s => s + 1)
   const goto = (n) => setStep(n)
+  const goHome = () => goto(0)
+  const goSpace = () => goto(step >= 9 ? 9 : step >= 8 ? 8 : 3) // go to furthest board screen
 
   return (
     <div className="app">
-      {step === 0 && <HomeScreen onNext={next} />}
+      {step === 0 && <HomeScreen onNext={next} spaceName={spaceName} onOpenSpace={() => goto(spaceName ? 3 : 1)} />}
       {step === 1 && <TemplatesScreen onNext={next} onBack={() => goto(0)} />}
-      {step === 2 && <BlueprintDetail onNext={next} onBack={() => goto(1)} />}
-      {step === 3 && <BacklogEmpty onNext={next} />}
+      {step === 2 && <BlueprintDetail onNext={(name) => { setSpaceName(name); next() }} onBack={() => goto(1)} />}
+      {step === 3 && <BacklogEmpty onNext={next} spaceName={spaceName} onGoHome={goHome} />}
       {step === 4 && <JiraImport onNext={next} onClose={() => goto(3)} />}
       {step === 5 && <JiraSyncSetup onNext={next} onSkip={() => goto(6)} />}
       {step === 6 && <EnrichConfirm onNext={next} onSkip={() => goto(7)} />}
       {step === 7 && <EnrichmentStart onNext={next} />}
-      {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} />}
-      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} />}
+      {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} spaceName={spaceName} onGoHome={goHome} />}
+      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} />}
     </div>
   )
 }
@@ -65,7 +68,7 @@ function MiroLogo() {
   )
 }
 
-function Sidebar({ active = 'Backlog', onNav = () => {} }) {
+function Sidebar({ active = 'Backlog', onNav = () => {}, spaceName, onGoHome }) {
   const items = [
     { icon: '⊞', label: 'Overview' },
     { icon: '▤', label: 'Backlog' },
@@ -75,8 +78,16 @@ function Sidebar({ active = 'Backlog', onNav = () => {} }) {
   ]
   return (
     <div className="sidebar">
+      {onGoHome && (
+        <div className="sidebar-home-link" onClick={onGoHome}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
+            <path d="M7 1.5L1.5 6.5V12.5H5.5V9H8.5V12.5H12.5V6.5L7 1.5Z" fill="#666"/>
+          </svg>
+          Home
+        </div>
+      )}
       <div className="sidebar-project">
-        <strong>Product Roadmap</strong>
+        <strong>{spaceName || 'Product Roadmap'}</strong>
         <span className="sidebar-meta">1 member</span>
       </div>
       <div className="sidebar-section-label">Roadmap Planning</div>
@@ -105,7 +116,7 @@ function Overlay({ children, onClose }) {
 }
 
 // ── SCREEN 0: Home ──────────────────────────────────────────
-function HomeScreen({ onNext }) {
+function HomeScreen({ onNext, spaceName, onOpenSpace }) {
   const boards = [
     { icon: '💡', name: 'Insights: Onboarding Journey Map', mod: 'Today', space: 'Miro Insights…', owner: 'Holly Rankin', badge: 'Internal' },
     { icon: '✅', name: 'Miro Insights Playtests', mod: 'Jan 30', space: 'Miro Insights…', owner: 'Mor Sela', badge: 'Internal' },
@@ -132,7 +143,14 @@ function HomeScreen({ onNext }) {
           ))}
         </nav>
         <div className="home-nav-section">Spaces</div>
-        <div className="home-nav-item dim">Your Spaces</div>
+        {spaceName ? (
+          <div className="home-nav-item home-space-item" onClick={onOpenSpace}>
+            <span className="home-space-dot" />
+            {spaceName}
+          </div>
+        ) : (
+          <div className="home-nav-item dim">Your Spaces</div>
+        )}
       </div>
       <div className="home-main">
         <div className="home-hero">
@@ -255,6 +273,8 @@ function TemplatesScreen({ onNext, onBack }) {
 
 // ── SCREEN 2: Blueprint detail ──────────────────────────────
 function BlueprintDetail({ onNext, onBack }) {
+  const [showNaming, setShowNaming] = useState(false)
+  const [name, setName] = useState('Product Roadmap')
   const boards = ['How it works', 'Backlog', 'Roadmap', 'AI Suggestions', 'Ideas']
   const icons = ['ℹ', '▤', '↔', '✦', '💬']
   return (
@@ -277,7 +297,7 @@ function BlueprintDetail({ onNext, onBack }) {
                 <div key={b} className="blueprint-board"><span>{icons[i + 1]}</span> {b}</div>
               ))}
             </div>
-            <button className="btn-use-blueprint" onClick={onNext}>Use Blueprint</button>
+            <button className="btn-use-blueprint" onClick={() => setShowNaming(true)}>Use Blueprint</button>
           </div>
           <div className="blueprint-right">
             <div className="blueprint-preview-area">
@@ -308,21 +328,44 @@ function BlueprintDetail({ onNext, onBack }) {
           </div>
         </div>
       </div>
+      {showNaming && (
+        <div className="overlay" onClick={() => setShowNaming(false)}>
+          <div className="naming-modal" onClick={e => e.stopPropagation()}>
+            <div className="naming-modal-icon">🗂</div>
+            <h3 className="naming-modal-title">Name your space</h3>
+            <p className="naming-modal-sub">Choose a name for your new Product Roadmap space.</p>
+            <input
+              className="naming-modal-input"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && name.trim()) onNext(name.trim()) }}
+              autoFocus
+              placeholder="e.g. Product Roadmap Q2"
+            />
+            <div className="naming-modal-actions">
+              <button className="btn-outline" onClick={() => setShowNaming(false)}>Cancel</button>
+              <button className="btn-primary" onClick={() => { if (name.trim()) onNext(name.trim()) }}>
+                Create Space
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // ── SCREEN 3: Backlog (empty table, import dropdown) ─────────
-function BacklogEmpty({ onNext }) {
+function BacklogEmpty({ onNext, spaceName, onGoHome }) {
   const [showImportMenu, setShowImportMenu] = useState(false)
   const cols = ['Title', 'Description', 'Status', 'Priority', 'Assignee']
   const rows = Array.from({ length: 15 }, (_, i) => i + 1)
 
   return (
     <div className="board-screen">
-      <MiroTopbar showBoard title="Product Roadmap" />
+      <MiroTopbar showBoard title={spaceName || 'Product Roadmap'} />
       <div className="board-body">
-        <Sidebar />
+        <Sidebar spaceName={spaceName} onGoHome={onGoHome} />
         <div className="board-content">
           <div className="board-toolbar">
             <span className="toolbar-icon">↺</span>
@@ -682,14 +725,14 @@ function EnrichmentStart({ onNext }) {
 }
 
 // ── SCREEN 7: Enriched table ─────────────────────────────────
-function EnrichedTable({ onRestart, onGoRoadmap }) {
+function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome }) {
   const [panelRow, setPanelRow] = useState(null)
 
   return (
     <div className="board-screen">
-      <MiroTopbar showBoard title="Product Roadmap" />
+      <MiroTopbar showBoard title={spaceName || 'Product Roadmap'} />
       <div className="board-body">
-        <Sidebar active="Backlog" onNav={(label) => { if (label === 'Roadmap' && onGoRoadmap) onGoRoadmap() }} />
+        <Sidebar active="Backlog" onNav={(label) => { if (label === 'Roadmap' && onGoRoadmap) onGoRoadmap() }} spaceName={spaceName} onGoHome={onGoHome} />
         <div className="board-content">
           <div className="board-toolbar">
             <span className="toolbar-icon">↺</span><span className="toolbar-icon">▤</span>

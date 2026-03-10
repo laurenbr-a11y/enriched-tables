@@ -298,7 +298,7 @@ function BarPopover({ item, groupColor, pos, onClose, onUpdateItem, onOpenPanel 
 }
 
 // ── Main RoadmapView ───────────────────────────────────────
-export default function RoadmapView({ onGoBacklog }) {
+export default function RoadmapView({ onGoBacklog, spaceName, onGoHome }) {
   const [groups, setGroups] = useState(INITIAL_GROUPS)
   const [colorMode, setColorMode] = useState('Group') // Group | Priority | Status
   const [popover, setPopover] = useState(null) // { item, groupColor, pos }
@@ -545,7 +545,7 @@ export default function RoadmapView({ onGoBacklog }) {
               <path d="M19.5 7h-3l-4 6.5L10 7H7l4.5 7L7 21h3l2.5-4.5 2.5 4.5h3l-4.5-7L19.5 7z" fill="#050038"/>
             </svg>
           </div>
-          <span className="topbar-board">Roadmap</span>
+          <span className="topbar-board">{spaceName || 'Product Roadmap'}</span>
           <span className="badge-internal">Internal</span>
           <span className="topbar-menu-btn" style={{ color: '#888', cursor: 'pointer', fontSize: 18, padding: '0 4px' }}>⋮</span>
           <button className="btn-outline" style={{ fontSize: 12, padding: '5px 12px' }}>Go to canvas</button>
@@ -579,6 +579,34 @@ export default function RoadmapView({ onGoBacklog }) {
 
       {/* Main layout */}
       <div className="roadmap-layout">
+        {/* Nav sidebar */}
+        <div className="sidebar" style={{ flexShrink: 0, zIndex: 2 }}>
+          {onGoHome && (
+            <div className="sidebar-home-link" onClick={onGoHome}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
+                <path d="M7 1.5L1.5 6.5V12.5H5.5V9H8.5V12.5H12.5V6.5L7 1.5Z" fill="#666"/>
+              </svg>
+              Home
+            </div>
+          )}
+          <div className="sidebar-project">
+            <strong>{spaceName || 'Product Roadmap'}</strong>
+            <span className="sidebar-meta">1 member</span>
+          </div>
+          <div className="sidebar-section-label">Roadmap Planning</div>
+          {[{icon:'⊞',label:'Overview'},{icon:'▤',label:'Backlog'},{icon:'↔',label:'Roadmap'}].map(it => (
+            <div
+              key={it.label}
+              className={`sidebar-item ${it.label === 'Roadmap' ? 'active' : ''}`}
+              onClick={it.label === 'Backlog' ? onGoBacklog : undefined}
+              style={{ cursor: it.label === 'Backlog' ? 'pointer' : 'default' }}
+            >
+              <span className="sidebar-icon">{it.icon}</span>
+              {it.label}
+            </div>
+          ))}
+        </div>
+
         {/* Left panel */}
         <div className="rdm-left">
           {/* Header cell matching month header height */}
