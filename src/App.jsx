@@ -33,7 +33,8 @@ export default function App() {
       {step === 7 && <EnrichmentStart onNext={next} />}
       {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} spaceName={spaceName} onGoHome={goHome} />}
       {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} />}
-      {step === 10 && <EnrichedTable rows={miroInsightsRows} spaceName="Miro Insights Roadmap" onGoHome={goHome} onRestart={() => goto(0)} />}
+      {step === 10 && <EnrichedTable rows={miroInsightsRows} spaceName="Miro Insights Roadmap" onGoHome={goHome} onRestart={() => goto(0)} onGoRoadmap={() => goto(11)} />}
+      {step === 11 && <RoadmapView spaceName="Miro Insights Roadmap" onGoHome={goHome} onGoBacklog={() => goto(10)} />}
     </div>
   )
 }
@@ -73,8 +74,6 @@ function Sidebar({ active = 'Backlog', onNav = () => {}, spaceName, onGoHome }) 
     { icon: '⊞', label: 'Overview' },
     { icon: '▤', label: 'Backlog' },
     { icon: '↔', label: 'Roadmap' },
-    { icon: '✦', label: 'AI Suggestions' },
-    { icon: '💬', label: 'Ideas' },
   ]
   return (
     <div className="sidebar">
@@ -278,8 +277,8 @@ function TemplatesScreen({ onNext, onBack }) {
 function BlueprintDetail({ onNext, onBack }) {
   const [showNaming, setShowNaming] = useState(false)
   const [name, setName] = useState('Product Roadmap')
-  const boards = ['How it works', 'Backlog', 'Roadmap', 'AI Suggestions', 'Ideas']
-  const icons = ['ℹ', '▤', '↔', '✦', '💬']
+  const boards = ['How it works', 'Backlog', 'Roadmap']
+  const icons = ['ℹ', '▤', '↔']
   return (
     <div className="fullpage-screen">
       <div className="fullpage-topbar">
@@ -291,7 +290,7 @@ function BlueprintDetail({ onNext, onBack }) {
         <div className="blueprint-body">
           <div className="blueprint-left">
             <h2 className="blueprint-title">Product Roadmap</h2>
-            <p className="blueprint-meta">This Blueprint creates a Space with 5 boards:</p>
+            <p className="blueprint-meta">This Blueprint creates a Space with 3 boards:</p>
             <div className="blueprint-boards">
               <div className="blueprint-section-label">Overview</div>
               <div className="blueprint-board active"><span>ℹ</span> How it works</div>

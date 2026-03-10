@@ -929,8 +929,6 @@ export function RoadmapSidebar({ onGoBacklog }) {
     { icon: '⊞', label: 'Overview' },
     { icon: '▤', label: 'Backlog' },
     { icon: '↔', label: 'Roadmap', isActive: true },
-    { icon: '✦', label: 'AI Suggestions' },
-    { icon: '💬', label: 'Ideas' },
   ]
   return (
     <div className="sidebar">
