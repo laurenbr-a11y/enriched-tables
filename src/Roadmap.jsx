@@ -148,7 +148,7 @@ function rowsToGroups(rows) {
       start: addDays('2026-01-01', startOff),
       end: addDays('2026-01-01', startOff + Math.min(dur, 55)),
       priority: row.priority || 'Medium',
-      status: s, effort: dur, deps: [], parentId: null,
+      status: s, effort: dur, deps: [], parentId: null, _row: row,
     }
   }
   return [
@@ -353,7 +353,7 @@ function BarPopover({ item, groupColor, pos, onClose, onUpdateItem, onOpenPanel 
 }
 
 // ── Main RoadmapView ───────────────────────────────────────
-export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogRows }) {
+export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogRows, PanelComponent }) {
   const [groups, setGroups] = useState(() => backlogRows ? rowsToGroups(backlogRows) : INITIAL_GROUPS)
   const [colorMode, setColorMode] = useState('Group') // Group | Priority | Status
   const [popover, setPopover] = useState(null) // { item, groupColor, pos }
@@ -368,6 +368,7 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
   const [dragOver, setDragOver] = useState(null)   // itemId
   const [hoveredItem, setHoveredItem] = useState(null)
   const [menuItem, setMenuItem] = useState(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // Scroll to today on mount
   useEffect(() => {
@@ -549,36 +550,6 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
     setDragOver(null)
   }
 
-  // ── Dependency SVG arrows (pre-computed paths) ─────────────
-  const depArrows = []
-  flatRows.forEach(row => {
-    if (row.type !== 'item') return
-    const { item, group } = row
-    item.deps.forEach(depId => {
-      const depRow = flatRows.find(r => r.type === 'item' && r.item.id === depId)
-      if (!depRow) return
-      const srcItem = depRow.item
-      const srcX2 = dateToX(parseDate(srcItem.end))
-      const srcY = depRow.y + ROW_HEIGHT / 2
-      const tgtX1 = dateToX(parseDate(item.start))
-      const tgtY = row.y + ROW_HEIGHT / 2
-      const conflict = srcX2 >= tgtX1
-      const color = conflict ? '#E53935' : '#bbb'
-
-      let d
-      if (!conflict) {
-        // Non-conflict: source ends before target starts, route right then down then right
-        d = `M ${srcX2},${srcY} L ${srcX2 + 14},${srcY} L ${srcX2 + 14},${tgtY} L ${tgtX1},${tgtY}`
-      } else {
-        // Conflict: bars overlap, route below both bars to avoid crossing bar content
-        const belowY = Math.max(depRow.y, row.y) + ROW_HEIGHT - 6
-        d = `M ${srcX2},${srcY} L ${srcX2 + 14},${srcY} L ${srcX2 + 14},${belowY} L ${tgtX1 - 14},${belowY} L ${tgtX1 - 14},${tgtY} L ${tgtX1},${tgtY}`
-      }
-
-      depArrows.push({ d, color, conflict, itemId: item.id })
-    })
-  })
-
   // ── Compute parent bars (all items including children) ─────
   const parentBars = groups.map(g => {
     if (!g.expanded || g.items.length === 0) return null
@@ -593,6 +564,45 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
 
   return (
     <div className="roadmap-page">
+      {/* Sidebar (full height) */}
+      <div className={`sidebar${sidebarCollapsed ? ' sidebar--collapsed' : ''}`} style={{ zIndex: 2 }}>
+        <div className="sidebar-hamburger" onClick={() => setSidebarCollapsed(c => !c)}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+        {!sidebarCollapsed && (
+          <div className="sidebar-inner">
+            {onGoHome && (
+              <div className="sidebar-home-link" onClick={onGoHome}>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
+                  <path d="M7 1.5L1.5 6.5V12.5H5.5V9H8.5V12.5H12.5V6.5L7 1.5Z" fill="#666"/>
+                </svg>
+                Home
+              </div>
+            )}
+            <div className="sidebar-project">
+              <strong>{spaceName || 'Product Roadmap'}</strong>
+              <span className="sidebar-meta">1 member</span>
+            </div>
+            <div className="sidebar-section-label">Roadmap Planning</div>
+            {[{icon:'⊞',label:'Overview'},{icon:'▤',label:'Backlog'},{icon:'↔',label:'Roadmap'}].map(it => (
+              <div
+                key={it.label}
+                className={`sidebar-item ${it.label === 'Roadmap' ? 'active' : ''}`}
+                onClick={it.label === 'Backlog' ? onGoBacklog : undefined}
+                style={{ cursor: it.label === 'Backlog' ? 'pointer' : 'default' }}
+              >
+                <span className="sidebar-icon">{it.icon}</span>
+                {it.label}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Right column: topbar + toolbar + gantt */}
+      <div className="rdm-right-col">
       {/* Topbar */}
       <div className="rdm-topbar">
         <div className="topbar-left">
@@ -636,33 +646,6 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
 
       {/* Main layout */}
       <div className="roadmap-layout">
-        {/* Nav sidebar */}
-        <div className="sidebar" style={{ flexShrink: 0, zIndex: 2 }}>
-          {onGoHome && (
-            <div className="sidebar-home-link" onClick={onGoHome}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
-                <path d="M7 1.5L1.5 6.5V12.5H5.5V9H8.5V12.5H12.5V6.5L7 1.5Z" fill="#666"/>
-              </svg>
-              Home
-            </div>
-          )}
-          <div className="sidebar-project">
-            <strong>{spaceName || 'Product Roadmap'}</strong>
-            <span className="sidebar-meta">1 member</span>
-          </div>
-          <div className="sidebar-section-label">Roadmap Planning</div>
-          {[{icon:'⊞',label:'Overview'},{icon:'▤',label:'Backlog'},{icon:'↔',label:'Roadmap'}].map(it => (
-            <div
-              key={it.label}
-              className={`sidebar-item ${it.label === 'Roadmap' ? 'active' : ''}`}
-              onClick={it.label === 'Backlog' ? onGoBacklog : undefined}
-              style={{ cursor: it.label === 'Backlog' ? 'pointer' : 'default' }}
-            >
-              <span className="sidebar-icon">{it.icon}</span>
-              {it.label}
-            </div>
-          ))}
-        </div>
 
         {/* Left panel */}
         <div className="rdm-left">
@@ -864,7 +847,6 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
                   const x2 = dateToX(parseDate(item.end))
                   const barW = Math.max(4, x2 - x1)
                   const barColor = getBarColor(item, g)
-                  const hasConflict = depArrows.some(a => a.itemId === item.id && a.conflict)
 
                   return (
                     <div
@@ -916,9 +898,6 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
                         {barW > 200 && (
                           <span className="rdm-bar-dates">→ {formatDate(item.end)}</span>
                         )}
-                        {hasConflict && (
-                          <div className="rdm-conflict-badge">⚠</div>
-                        )}
                       </div>
                     </div>
                   )
@@ -927,45 +906,19 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
                 return [...groupEls, ...itemEls]
               })()}
 
-              {/* Dependency SVG arrows */}
-              <svg
-                className="dep-arrow-svg"
-                style={{ position: 'absolute', top: 0, left: 0, width: TOTAL_WIDTH, height: totalHeight, pointerEvents: 'none', overflow: 'visible' }}
-              >
-                <defs>
-                  <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto">
-                    <path d="M0,0 L6,2 L0,4 Z" fill="#bbb" />
-                  </marker>
-                  <marker id="arrowhead-red" markerWidth="6" markerHeight="4" refX="3" refY="2" orient="auto">
-                    <path d="M0,0 L6,2 L0,4 Z" fill="#E53935" />
-                  </marker>
-                </defs>
-                {depArrows.map((a, i) => {
-                  const markerId = a.conflict ? 'arrowhead-red' : 'arrowhead'
-                  return (
-                    <path
-                      key={i}
-                      d={a.d}
-                      fill="none"
-                      stroke={a.color}
-                      strokeWidth="1.5"
-                      markerEnd={`url(#${markerId})`}
-                    />
-                  )
-                })}
-              </svg>
             </div>
           </div>
         </div>
 
         {/* Side panel */}
-        {panelItem && (() => {
+        {panelItem && PanelComponent && (() => {
           const found = getItem(panelItem.id)
-          const gc = found ? GROUP_COLORS[found.group.colorIndex] : '#7B5EA7'
           const currentItem = found ? found.item : panelItem
+          const row = currentItem._row
+          if (!row) return null
           return (
             <div style={{ width: 420, flexShrink: 0, position: 'relative', borderLeft: '1px solid #e8e8e8' }}>
-              <RoadmapSidePanel item={currentItem} groupColor={gc} onClose={() => setPanelItem(null)} />
+              <PanelComponent row={row} onClose={() => setPanelItem(null)} />
             </div>
           )
         })()}
@@ -982,6 +935,7 @@ export default function RoadmapView({ onGoBacklog, spaceName, onGoHome, backlogR
           onOpenPanel={(item) => { setPanelItem(item); setPopover(null) }}
         />
       )}
+      </div>{/* end rdm-right-col */}
     </div>
   )
 }

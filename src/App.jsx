@@ -32,9 +32,9 @@ export default function App() {
       {step === 6 && <EnrichConfirm onNext={next} onSkip={() => goto(7)} />}
       {step === 7 && <EnrichmentStart onNext={next} />}
       {step === 8 && <EnrichedTable onRestart={() => goto(0)} onGoRoadmap={() => goto(9)} spaceName={spaceName} onGoHome={goHome} />}
-      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} backlogRows={tableRows} />}
+      {step === 9 && <RoadmapView onGoBacklog={() => goto(8)} spaceName={spaceName} onGoHome={goHome} backlogRows={tableRows} PanelComponent={SidePanel} />}
       {step === 10 && <EnrichedTable rows={miroInsightsRows} spaceName="Miro Insights Roadmap" onGoHome={goHome} onRestart={() => goto(0)} onGoRoadmap={() => goto(11)} />}
-      {step === 11 && <RoadmapView spaceName="Miro Insights Roadmap" onGoHome={goHome} onGoBacklog={() => goto(10)} backlogRows={miroInsightsRows} />}
+      {step === 11 && <RoadmapView spaceName="Miro Insights Roadmap" onGoHome={goHome} onGoBacklog={() => goto(10)} backlogRows={miroInsightsRows} PanelComponent={SidePanel} />}
     </div>
   )
 }
@@ -69,38 +69,47 @@ function MiroLogo() {
   )
 }
 
-function Sidebar({ active = 'Backlog', onNav = () => {}, spaceName, onGoHome }) {
+function Sidebar({ active = 'Backlog', onNav = () => {}, spaceName, onGoHome, collapsed, onToggle }) {
   const items = [
     { icon: '⊞', label: 'Overview' },
     { icon: '▤', label: 'Backlog' },
     { icon: '↔', label: 'Roadmap' },
   ]
   return (
-    <div className="sidebar">
-      {onGoHome && (
-        <div className="sidebar-home-link" onClick={onGoHome}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
-            <path d="M7 1.5L1.5 6.5V12.5H5.5V9H8.5V12.5H12.5V6.5L7 1.5Z" fill="#666"/>
-          </svg>
-          Home
+    <div className={`sidebar${collapsed ? ' sidebar--collapsed' : ''}`}>
+      <div className="sidebar-hamburger" onClick={onToggle}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+      </div>
+      {!collapsed && (
+        <div className="sidebar-inner">
+          {onGoHome && (
+            <div className="sidebar-home-link" onClick={onGoHome}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{flexShrink:0}}>
+                <path d="M7 1.5L1.5 6.5V12.5H5.5V9H8.5V12.5H12.5V6.5L7 1.5Z" fill="#666"/>
+              </svg>
+              Home
+            </div>
+          )}
+          <div className="sidebar-project">
+            <strong>{spaceName || 'Product Roadmap'}</strong>
+            <span className="sidebar-meta">1 member</span>
+          </div>
+          <div className="sidebar-section-label">Roadmap Planning</div>
+          {items.map(it => (
+            <div
+              key={it.label}
+              className={`sidebar-item ${it.label === active ? 'active' : ''}`}
+              onClick={() => onNav(it.label)}
+              style={{ cursor: 'pointer' }}
+            >
+              <span className="sidebar-icon">{it.icon}</span>
+              {it.label}
+            </div>
+          ))}
         </div>
       )}
-      <div className="sidebar-project">
-        <strong>{spaceName || 'Product Roadmap'}</strong>
-        <span className="sidebar-meta">1 member</span>
-      </div>
-      <div className="sidebar-section-label">Roadmap Planning</div>
-      {items.map(it => (
-        <div
-          key={it.label}
-          className={`sidebar-item ${it.label === active ? 'active' : ''}`}
-          onClick={() => onNav(it.label)}
-          style={{ cursor: 'pointer' }}
-        >
-          <span className="sidebar-icon">{it.icon}</span>
-          {it.label}
-        </div>
-      ))}
     </div>
   )
 }
@@ -729,12 +738,13 @@ function EnrichmentStart({ onNext }) {
 // ── SCREEN 7: Enriched table ─────────────────────────────────
 function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome, rows = tableRows }) {
   const [panelRow, setPanelRow] = useState(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   return (
-    <div className="board-screen">
-      <MiroTopbar showBoard title={spaceName || 'Product Roadmap'} />
-      <div className="board-body">
-        <Sidebar active="Backlog" onNav={(label) => { if (label === 'Roadmap' && onGoRoadmap) onGoRoadmap() }} spaceName={spaceName} onGoHome={onGoHome} />
+    <div className="board-screen board-screen--v2">
+      <Sidebar active="Backlog" onNav={(label) => { if (label === 'Roadmap' && onGoRoadmap) onGoRoadmap() }} spaceName={spaceName} onGoHome={onGoHome} collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(c => !c)} />
+      <div className="board-right">
+        <MiroTopbar showBoard title={spaceName || 'Product Roadmap'} />
         <div className="board-content">
           <div className="board-toolbar">
             <span className="toolbar-icon">↺</span><span className="toolbar-icon">▤</span>
