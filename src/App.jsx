@@ -850,7 +850,7 @@ function EnrichmentStart({ onNext }) {
           </div>
           <div className="table-panel-layout">
             <EnrichedTableView enriching onOpenPanel={setPanelRow} panelRow={panelRow} />
-            {panelRow !== null && <SidePanel row={tableRows[panelRow]} onClose={() => setPanelRow(null)} />}
+            {panelRow !== null && <SidePanel row={tableRows[panelRow]} rowIndex={panelRow} onClose={() => setPanelRow(null)} />}
           </div>
           {toastVisible && (
             <div className="generating-toast">
@@ -888,7 +888,7 @@ function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome, rows = tab
           </div>
           <div className="table-panel-layout">
             <EnrichedTableView enriching={false} onOpenPanel={setPanelRow} panelRow={panelRow} rows={rows} />
-            {panelRow !== null && <SidePanel row={rows[panelRow]} onClose={() => setPanelRow(null)} />}
+            {panelRow !== null && <SidePanel row={rows[panelRow]} rowIndex={panelRow} onClose={() => setPanelRow(null)} />}
           </div>
           <div className="restart-hint" onClick={onRestart}>↩ Restart prototype</div>
         </div>
@@ -1242,16 +1242,46 @@ function FeedbackFilter({ filters, onChange }) {
 }
 
 // ── Side panel ───────────────────────────────────────────────
-function SidePanel({ row, onClose }) {
-  const [tab, setTab] = useState('Insights')
+function SidePanel({ row, onClose, rowIndex = 0 }) {
+  const [tab, setTab] = useState('Details')
   const [filters, setFilters] = useState({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })
   const [sort, setSort] = useState('newest')
 
-  // Reset to Insights tab whenever the displayed row changes
-  useEffect(() => { setTab('Insights') }, [row])
+  // Reset to Details tab whenever the displayed row changes
+  useEffect(() => { setTab('Details') }, [row])
   const [rejectingIdx, setRejectingIdx] = useState(new Set())
   const [rejectedIdx, setRejectedIdx] = useState(new Set())
   const [rejectReasons, setRejectReasons] = useState({})
+
+  const panelId = `PT-${300 + rowIndex}`
+  const jiraId = `PT-${100 + rowIndex * 2}`
+
+  const startDate = (() => {
+    const d = new Date('2025-09-01')
+    d.setDate(d.getDate() + rowIndex * 14)
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')
+  })()
+  const endDate = (() => {
+    const d = new Date('2025-09-01')
+    d.setDate(d.getDate() + rowIndex * 14 + 49 + rowIndex * 7)
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-')
+  })()
+
+  const BRAND_COLORS = {
+    Stripe: '#635BFF', Figma: '#F24E1E', Notion: '#000', Linear: '#5E6AD2',
+    Vercel: '#24292F', Slack: '#4A154B', GitHub: '#24292F', Dropbox: '#0061FF',
+    Apple: '#555', Google: '#4285F4', Facebook: '#1877F2', AWS: '#FF9900',
+    YouTube: '#FF0000', Twitter: '#1DA1F2', LinkedIn: '#0A66C2', Miro: '#4262FF',
+    Atlassian: '#0052CC', HubSpot: '#FF7A59', Salesforce: '#00A1E0',
+    Zendesk: '#03363D', Intercom: '#286EFA', Canva: '#00C4CC', Loom: '#625DF5',
+    Asana: '#F06A6A', Monday: '#FF3D57', Postman: '#FF6C37', Retool: '#3D3D3D',
+    Trello: '#0079BF', GitLab: '#FC6D26', Zapier: '#FF4A00', Basecamp: '#1D2D35',
+    Various: '#888', Enterprise: '#555',
+  }
+
+  const companies = row.panelCompanies || []
+  const regularCompanies = companies.filter(c => !c.startsWith('+'))
+  const overflowItem = companies.find(c => c.startsWith('+'))
 
   const DATE_ORDER = ['1 week ago','2 weeks ago','3 weeks ago','1 month ago','6 weeks ago','2 months ago','3 months ago','4 months ago']
 
@@ -1279,7 +1309,10 @@ function SidePanel({ row, onClose }) {
   return (
     <div className="side-panel">
       <div className="sp-header">
-        <span className="sp-title" title={row.fullTitle}>{row.fullTitle}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5l1.4 2.8 3.1.45-2.25 2.2.53 3.1L6.5 8.6l-2.78 1.45.53-3.1L2 4.75l3.1-.45L6.5 1.5z" stroke="#4262FF" strokeWidth="1.2" fill="#4262FF" fillOpacity="0.15" strokeLinejoin="round"/></svg>
+          <span className="sp-title">{tab === 'Jira' ? jiraId : panelId}</span>
+        </div>
         <div className="sp-header-actions">
           <button className="sp-icon-btn">⤢</button>
           <button className="sp-icon-btn">🔗</button>
@@ -1287,23 +1320,89 @@ function SidePanel({ row, onClose }) {
         </div>
       </div>
       <div className="sp-tabs">
-        {['Details', 'Comments', 'Insights'].map(t => (
+        {['Details', 'Jira', 'Insights', 'Comments'].map(t => (
           <button key={t} className={`sp-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
       <div className="sp-body">
         {tab === 'Details' && (
           <div className="sp-placeholder">
-            <div className="sp-field"><span className="sp-field-label">Status</span><span className="status-tag">To do</span></div>
-            <div className="sp-field"><span className="sp-field-label">Priority</span><span className="priority-badge p-high">High</span></div>
-            <div className="sp-field"><span className="sp-field-label">Assignee</span><span>{row.assignee}</span></div>
-            <div className="sp-field"><span className="sp-field-label">Description</span><span className="sp-desc-text">No description added yet.</span></div>
+            <div className="sp-field">
+              <span className="sp-field-label">Title</span>
+              <span style={{ fontSize: 13, color: '#333', lineHeight: 1.4 }}>{row.fullTitle}</span>
+            </div>
+            <div className="sp-field">
+              <span className="sp-field-label">Status</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span className={statusClass(row.status)}>{row.status}</span>
+                <button className="sp-edit-btn" title="Edit status">
+                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M7.5 1.5l2 2-5.5 5.5H2v-2L7.5 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div className="sp-field">
+              <span className="sp-field-label">Start date</span>
+              <span className="sp-date-chip">{startDate}</span>
+            </div>
+            <div className="sp-field">
+              <span className="sp-field-label">End date</span>
+              <span className="sp-date-chip">{endDate}</span>
+            </div>
           </div>
         )}
-        {tab === 'Comments' && (
-          <div className="sp-placeholder sp-empty">
-            <div className="sp-empty-icon">💬</div>
-            <div>No comments yet</div>
+        {tab === 'Jira' && (
+          <div className="sp-jira-form">
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Issue type</div>
+              <div className="sp-jira-select-wrap">
+                <select className="sp-jira-select"><option value="">Select an option</option></select>
+              </div>
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Priority</div>
+              <div className="sp-jira-select-wrap">
+                <select className="sp-jira-select"><option value="">Select an option</option></select>
+              </div>
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Summary</div>
+              <input className="sp-jira-input" type="text" placeholder="Placeholder Text" />
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Description</div>
+              <textarea className="sp-jira-input sp-jira-textarea" placeholder="Placeholder Text" />
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Assignee</div>
+              <input className="sp-jira-input" type="text" placeholder="Placeholder Text" />
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Reporter</div>
+              <input className="sp-jira-input" type="text" placeholder="Placeholder Text" />
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Epic</div>
+              <input className="sp-jira-input" type="text" placeholder="Placeholder Text" />
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Teams</div>
+              <div className="sp-jira-select-wrap">
+                <select className="sp-jira-select"><option value="">Select an option</option></select>
+              </div>
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Start date</div>
+              <div className="sp-jira-date-wrap">
+                <input className="sp-jira-input" type="text" placeholder="Select a date" readOnly />
+                <span className="sp-jira-calendar-icon">
+                  <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><rect x="1" y="2" width="11" height="10" rx="2" stroke="#aaa" strokeWidth="1.2"/><path d="M1 5h11M4 1v2M9 1v2" stroke="#aaa" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                </span>
+              </div>
+            </div>
+            <div className="sp-jira-field-group">
+              <div className="sp-jira-label">Stream</div>
+              <input className="sp-jira-input" type="text" placeholder="Placeholder Text" />
+            </div>
           </div>
         )}
         {tab === 'Insights' && (
@@ -1340,28 +1439,31 @@ function SidePanel({ row, onClose }) {
               })()}
             </div>
             <div className="sp-section">
-              <div className="sp-section-title">Impact estimates</div>
-              <div className="sp-impact-grid">
-                <div className="sp-impact-item">
-                  <div className="sp-impact-num">{row.panelMentions}</div>
-                  <div className="sp-impact-label">Total Mentions</div>
-                </div>
-                <div className="sp-impact-item">
-                  <div className="sp-impact-num">{row.panelCustomers}</div>
-                  <div className="sp-impact-label">Unique Customers</div>
-                </div>
-                <div className="sp-impact-item">
-                  <div className="sp-impact-num">{row.panelRevenue}</div>
-                  <div className="sp-impact-label">Est. Revenue Impact</div>
-                </div>
+              <div className="sp-section-title">Top impacted customers</div>
+              <div className="sp-brand-chips">
+                {regularCompanies.map(c => (
+                  <span key={c} className="sp-brand-chip" style={{ background: BRAND_COLORS[c] || '#888' }} title={c}>
+                    {c.slice(0, 2).toUpperCase()}
+                  </span>
+                ))}
+                {overflowItem && <span className="sp-brand-overflow">{overflowItem}</span>}
               </div>
             </div>
             <div className="sp-section">
-              <div className="sp-section-title">Top impacted customers</div>
-              <div className="sp-customer-chips">
-                {row.panelCompanies.map(c => (
-                  <span key={c} className="sp-company-chip">{c}</span>
-                ))}
+              <div className="sp-section-title">Status</div>
+              <div className="sp-stats-row">
+                <div className="sp-stat-item">
+                  <div className="sp-stat-num">{row.panelMentions}</div>
+                  <div className="sp-stat-label">Total Mentions</div>
+                </div>
+                <div className="sp-stat-item sp-stat-item--bordered">
+                  <div className="sp-stat-num">{row.panelCustomers}</div>
+                  <div className="sp-stat-label">Unique Customers</div>
+                </div>
+              </div>
+              <div className="sp-revenue-stat">
+                <div className="sp-stat-label">Est. Revenue Impact</div>
+                <div className="sp-revenue-num">{row.panelRevenue}</div>
               </div>
             </div>
             <div className="sp-section sp-feedback-section">
@@ -1456,6 +1558,12 @@ function SidePanel({ row, onClose }) {
                 })}
               </div>
             </div>
+          </div>
+        )}
+        {tab === 'Comments' && (
+          <div className="sp-placeholder sp-empty">
+            <div className="sp-empty-icon">💬</div>
+            <div>No comments yet</div>
           </div>
         )}
       </div>
