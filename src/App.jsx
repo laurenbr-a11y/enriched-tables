@@ -1241,17 +1241,178 @@ function FeedbackFilter({ filters, onChange }) {
   )
 }
 
+// ── Feedback detail helpers ───────────────────────────────────
+const MIRO_REPS = ['Daniel Coronado', 'Emma Walsh', 'Tyler Nguyen']
+
+function generateCallTranscript(feedback) {
+  const repName = MIRO_REPS[(feedback.author.charCodeAt(0) + (feedback.author.charCodeAt(1) || 0)) % MIRO_REPS.length]
+  const raw = feedback.quote.replace(/^["""]|["""]$/g, '')
+  return [
+    { speaker: repName, isMiro: true, time: '00:44', text: `Hi ${feedback.author.split(' ')[0]}! I help support some of our key accounts here at Miro — I wanted to connect and hear how the product is working for your team. Are there things that feel like friction or areas you'd love to see improve?` },
+    { speaker: feedback.author, isMiro: false, time: '01:19', text: `Yeah, happy to chat. We use Miro pretty regularly — it's helpful overall but there are definitely some things that slow us down.` },
+    { speaker: repName, isMiro: true, time: '01:52', text: `That's great context. What would you say is the biggest pain point for your team right now?` },
+    { speaker: feedback.author, isMiro: false, time: '02:20', text: raw },
+    { speaker: repName, isMiro: true, time: '03:08', text: `That's a really clear pain point — thank you. How often does this come up? Is it a recurring blocker or more situational?` },
+    { speaker: feedback.author, isMiro: false, time: '03:34', text: `It comes up regularly, especially during our planning cycles. We've tried workarounds but nothing really sticks.` },
+    { speaker: repName, isMiro: true, time: '04:02', text: `This is exactly the kind of signal the product team needs to hear. I'll make sure it gets captured. Is there anything else you'd want us to prioritize?` },
+    { speaker: feedback.author, isMiro: false, time: '04:28', text: `Just smoother core workflows. We want to stay on Miro long term — any improvement here would matter a lot to us.` },
+  ]
+}
+
+function generateTicketThread(feedback) {
+  const raw = feedback.quote.replace(/^["""]|["""]$/g, '')
+  return [
+    { speaker: feedback.author, isMiro: false, time: feedback.date, text: raw },
+    { speaker: 'Support (Miro)', isMiro: true, time: '2 days ago', text: `Thanks for reaching out, ${feedback.author.split(' ')[0]}! We've logged this and shared it with the product team. Could you share your setup — browser, board size, or any steps to reproduce?` },
+    { speaker: feedback.author, isMiro: false, time: '1 day ago', text: `We're on Chrome, latest version. Board has 200+ items. It's consistently slow whenever more than 5 people are collaborating at once.` },
+    { speaker: 'Support (Miro)', isMiro: true, time: '18 hours ago', text: `Thank you! I've escalated this to our engineering team. We'll follow up once we have an update. As a temporary workaround, reducing simultaneous editors can help.` },
+  ]
+}
+
+function generateMessageThread(feedback) {
+  const raw = feedback.quote.replace(/^["""]|["""]$/g, '')
+  return [
+    { speaker: feedback.author, isMiro: false, time: '10:14 AM', text: raw },
+    { speaker: 'You (Miro)', isMiro: true, time: '10:22 AM', text: `Hey ${feedback.author.split(' ')[0]}, thanks for flagging this! That's really useful context. Would you be open to a short call so we can dig into it more?` },
+    { speaker: feedback.author, isMiro: false, time: '10:35 AM', text: `Sure, I can do Thursday or Friday. It's been a significant issue for our team so I'm happy to share more detail.` },
+    { speaker: 'You (Miro)', isMiro: true, time: '10:41 AM', text: `Friday works great — I'll send a calendar invite. This kind of feedback directly shapes what we build next.` },
+  ]
+}
+
+function FeedbackDetail({ feedback, onBack }) {
+  const isCall = feedback.source === 'Call'
+  const isTicket = feedback.source === 'Ticket'
+  const middleTab = isCall ? 'Conversation' : isTicket ? 'Thread' : 'Messages'
+  const [innerTab, setInnerTab] = useState(middleTab)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const firstName = feedback.author.split(' ')[0]
+  const lastName = feedback.author.split(' ').slice(1).join(' ')
+  const username = `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/\s+/g, '_')}`
+
+  const title = isCall
+    ? `Call with ${feedback.author}`
+    : isTicket
+      ? `Ticket from ${feedback.author}`
+      : `Message from ${feedback.author}`
+
+  const thread = isCall
+    ? generateCallTranscript(feedback)
+    : isTicket
+      ? generateTicketThread(feedback)
+      : generateMessageThread(feedback)
+
+  const TopIcon = () => isCall ? (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 9.5C2 5.36 5.36 2 9.5 2S17 5.36 17 9.5c0 1.3-.33 2.52-.9 3.57L17 16l-2.93-.9A7.45 7.45 0 019.5 17C5.36 17 2 13.64 2 9.5z" stroke="#111" strokeWidth="1.4" strokeLinejoin="round"/><circle cx="6.5" cy="9.5" r=".8" fill="#111"/><circle cx="9.5" cy="9.5" r=".8" fill="#111"/><circle cx="12.5" cy="9.5" r=".8" fill="#111"/></svg>
+  ) : isTicket ? (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="2" width="14" height="14" rx="2" stroke="#111" strokeWidth="1.4"/><path d="M5 6h8M5 9h8M5 12h5" stroke="#111" strokeWidth="1.3" strokeLinecap="round"/></svg>
+  ) : (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 4h12a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 0115 14H5l-3.5 2.5V5.5A1.5 1.5 0 013 4z" stroke="#111" strokeWidth="1.4" strokeLinejoin="round"/></svg>
+  )
+
+  return (
+    <div className="fd-panel">
+      <div className="fd-topbar">
+        <button className="fd-back-btn" onClick={onBack}>
+          <TopIcon />
+          <span>Feedback</span>
+        </button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button className="sp-icon-btn">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2v10h10V9M8 2h4v4M13 1L7 7" stroke="#555" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <button className="fd-add-btn">+ Add to board</button>
+        </div>
+      </div>
+      <div className="fd-body">
+        <h1 className="fd-title">{title}</h1>
+        <div className="fd-person-row">
+          <div className="fd-avatar">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="20" fill="#C8972B"/><circle cx="20" cy="16" r="6.5" fill="#fff" fillOpacity="0.85"/><ellipse cx="20" cy="31" rx="10" ry="6.5" fill="#fff" fillOpacity="0.85"/></svg>
+          </div>
+          <div>
+            <div className="fd-person-name">
+              {username} [[unknown]]
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ color: '#777' }}><rect x="1" y="2.5" width="11" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M1 4l5.5 3.5L12 4" stroke="currentColor" strokeWidth="1.2"/></svg>
+            </div>
+            <div className="fd-person-meta">{feedback.role || 'Product Manager'} at {feedback.company.toUpperCase()}</div>
+          </div>
+        </div>
+        <div className="fd-divider" />
+        <div className="fd-inner-tabs">
+          {['Summary', middleTab, 'Details'].map(t => (
+            <button key={t} className={`fd-inner-tab ${innerTab === t ? 'active' : ''}`} onClick={() => setInnerTab(t)}>{t}</button>
+          ))}
+        </div>
+
+        {innerTab === 'Summary' && (
+          <div className="fd-details">
+            <p className="fd-summary-text">{feedback.author} from {feedback.company} {isCall ? 'discussed' : isTicket ? 'reported' : 'messaged about'} issues with their workflow: <em>{feedback.quote.replace(/^["""]|["""]$/g, '')}</em></p>
+            <div className="fd-meta-row"><span className="fd-meta-label">Source</span><span className="fd-meta-value">{feedback.source}</span></div>
+            <div className="fd-meta-row"><span className="fd-meta-label">Date</span><span className="fd-meta-value">{feedback.date}</span></div>
+            <div className="fd-meta-row"><span className="fd-meta-label">Company</span><span className="fd-meta-value">{feedback.company}</span></div>
+            {feedback.role && <div className="fd-meta-row"><span className="fd-meta-label">Role</span><span className="fd-meta-value">{feedback.role}</span></div>}
+          </div>
+        )}
+
+        {innerTab === middleTab && (
+          <div>
+            {isCall && (
+              <div className="fd-search-row">
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ margin: '0 8px', flexShrink: 0 }}><circle cx="5.5" cy="5.5" r="4" stroke="#aaa" strokeWidth="1.3"/><path d="M9 9l2.5 2.5" stroke="#aaa" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                <input className="fd-search-input" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                <button className="fd-nav-btn">∧</button>
+                <button className="fd-nav-btn">∨</button>
+              </div>
+            )}
+            <div className="fd-transcript">
+              {thread.map((turn, i) => (
+                <div key={i} className={`fd-turn ${turn.isMiro ? 'fd-turn--miro' : 'fd-turn--customer'}`}>
+                  <div className="fd-turn-header">
+                    <strong className="fd-turn-speaker">{turn.speaker}</strong>
+                    <span className="fd-turn-time">{turn.time}</span>
+                    {turn.isMiro && (
+                      <button className="fd-copy-btn" title="Copy">
+                        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="4.5" y="4.5" width="8.5" height="8.5" rx="1.5" stroke="#777" strokeWidth="1.2"/><path d="M3 10.5V2.5A1 1 0 014 1.5h8" stroke="#777" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                      </button>
+                    )}
+                  </div>
+                  <p className="fd-turn-text">{turn.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {innerTab === 'Details' && (
+          <div className="fd-details">
+            <div className="fd-meta-row"><span className="fd-meta-label">Author</span><span className="fd-meta-value">{feedback.author}</span></div>
+            <div className="fd-meta-row"><span className="fd-meta-label">Company</span><span className="fd-meta-value">{feedback.company}</span></div>
+            {feedback.role && <div className="fd-meta-row"><span className="fd-meta-label">Role</span><span className="fd-meta-value">{feedback.role}</span></div>}
+            <div className="fd-meta-row"><span className="fd-meta-label">Source</span><span className="fd-meta-value">{feedback.source}</span></div>
+            <div className="fd-meta-row"><span className="fd-meta-label">Date</span><span className="fd-meta-value">{feedback.date}</span></div>
+            <div className="fd-meta-row"><span className="fd-meta-label">Type</span><span className={`sp-feedback-type sp-type-${feedback.type.toLowerCase()}`}>{feedback.type}</span></div>
+            {feedback.segment && <div className="fd-meta-row"><span className="fd-meta-label">Segment</span><span className="fd-meta-value">{feedback.segment}</span></div>}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Side panel ───────────────────────────────────────────────
 function SidePanel({ row, onClose, rowIndex = 0 }) {
   const [tab, setTab] = useState('Details')
   const [filters, setFilters] = useState({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })
   const [sort, setSort] = useState('newest')
 
-  // Reset to Details tab whenever the displayed row changes
-  useEffect(() => { setTab('Details') }, [row])
   const [rejectingIdx, setRejectingIdx] = useState(new Set())
   const [rejectedIdx, setRejectedIdx] = useState(new Set())
   const [rejectReasons, setRejectReasons] = useState({})
+  const [selectedFeedback, setSelectedFeedback] = useState(null)
+
+  // Reset tab and selected feedback whenever the displayed row changes
+  useEffect(() => { setTab('Details'); setSelectedFeedback(null) }, [row])
 
   const panelId = `PT-${300 + rowIndex}`
   const jiraId = `PT-${100 + rowIndex * 2}`
@@ -1305,6 +1466,14 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
   })
 
   const activeFilterCount = Object.values(filters).reduce((s, set) => s + set.size, 0)
+
+  if (selectedFeedback) {
+    return (
+      <div className="side-panel">
+        <FeedbackDetail feedback={selectedFeedback} onBack={() => setSelectedFeedback(null)} />
+      </div>
+    )
+  }
 
   return (
     <div className="side-panel">
@@ -1526,13 +1695,14 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
                   }
 
                   return (
-                    <div key={i} className={`sp-feedback-card sp-card-${f.type.toLowerCase()}`}>
+                    <div key={i} className={`sp-feedback-card sp-card-${f.type.toLowerCase()}`} style={{ cursor: 'pointer' }} onClick={() => setSelectedFeedback(f)}>
                       <div className="sp-feedback-top">
                         <span className={`sp-feedback-type sp-type-${f.type.toLowerCase()}`}>
                           {f.type === 'Problem' ? 'User problem' : f.type === 'Request' ? 'User request' : 'User praise'} ⓘ
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <button className="sp-reject-btn" title="Reject feedback" onClick={() => {
+                          <button className="sp-reject-btn" title="Reject feedback" onClick={(e) => {
+                            e.stopPropagation()
                             const n = new Set(rejectingIdx); n.add(idx); setRejectingIdx(n)
                           }}>
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -1540,7 +1710,7 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
                               <line x1="2.5" y1="2.5" x2="11.5" y2="11.5" stroke="#aaa" strokeWidth="1.3" strokeLinecap="round"/>
                             </svg>
                           </button>
-                          <button className="sp-fb-more">⋮</button>
+                          <button className="sp-fb-more" onClick={e => e.stopPropagation()}>⋮</button>
                         </div>
                       </div>
                       <div className="sp-stars">
