@@ -1467,14 +1467,6 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
 
   const activeFilterCount = Object.values(filters).reduce((s, set) => s + set.size, 0)
 
-  if (selectedFeedback) {
-    return (
-      <div className="side-panel">
-        <FeedbackDetail feedback={selectedFeedback} onBack={() => setSelectedFeedback(null)} />
-      </div>
-    )
-  }
-
   return (
     <div className="side-panel">
       <div className="sp-header">
@@ -1490,7 +1482,11 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
       </div>
       <div className="sp-tabs">
         {['Details', 'Jira', 'Insights', 'Comments'].map(t => (
-          <button key={t} className={`sp-tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>{t}</button>
+          <button
+            key={t}
+            className={`sp-tab ${(tab === t && !selectedFeedback) || (t === 'Insights' && selectedFeedback) ? 'active' : ''}`}
+            onClick={() => { setTab(t); setSelectedFeedback(null) }}
+          >{t}</button>
         ))}
       </div>
       <div className="sp-body">
@@ -1574,7 +1570,10 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
             </div>
           </div>
         )}
-        {tab === 'Insights' && (
+        {tab === 'Insights' && selectedFeedback && (
+          <FeedbackDetail feedback={selectedFeedback} onBack={() => setSelectedFeedback(null)} />
+        )}
+        {tab === 'Insights' && !selectedFeedback && (
           <div className="sp-insights">
             <div className="sp-section">
               <div className="sp-section-title">Summary</div>
