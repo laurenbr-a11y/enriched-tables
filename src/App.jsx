@@ -1313,16 +1313,9 @@ function FeedbackDetail({ feedback, onBack }) {
   return (
     <div className="fd-panel">
       <div className="fd-topbar">
-        <button className="fd-back-btn" onClick={onBack}>
-          <TopIcon />
-          <span>Feedback</span>
+        <button className="fd-back-btn" onClick={onBack} aria-label="Back">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 13L5 8l5-5" stroke="#555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className="sp-icon-btn">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 2H2v10h10V9M8 2h4v4M13 1L7 7" stroke="#555" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          </button>
-          <button className="fd-add-btn">+ Add to board</button>
-        </div>
       </div>
       <div className="fd-body">
         <h1 className="fd-title">{title}</h1>

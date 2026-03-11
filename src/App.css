@@ -522,11 +522,9 @@
 
 /* ── Feedback Detail ─────────────────────────────────────── */
 .fd-panel { display: flex; flex-direction: column; }
-.fd-topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #eee; flex-shrink: 0; }
-.fd-back-btn { display: flex; align-items: center; gap: 7px; background: none; border: none; cursor: pointer; font-size: 14px; font-weight: 700; color: #111; padding: 4px 0; font-family: inherit; }
-.fd-back-btn:hover { opacity: 0.7; }
-.fd-add-btn { background: #f0f0f0; border: 1px solid #e0e0e0; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; color: #1a1a1a; white-space: nowrap; }
-.fd-add-btn:hover { background: #e6e6e6; }
+.fd-topbar { display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid #eee; flex-shrink: 0; }
+.fd-back-btn { display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 6px; color: #555; }
+.fd-back-btn:hover { background: #f0f0f0; }
 .fd-body { padding: 24px 20px 32px; }
 .fd-title { font-size: 26px; font-weight: 700; color: #111; margin: 0 0 20px; line-height: 1.25; }
 .fd-person-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
