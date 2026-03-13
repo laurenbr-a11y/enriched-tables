@@ -1128,15 +1128,15 @@ const OTHER_FILTERS = [
   { k: 'appNames',       label: 'App Name' },
 ]
 const FILTER_VALUES = {
-  sources:      { values: ['Call','Ticket','Message','Other'], searchable: false },
+  sources:      { values: ['Call','Ticket','Message','Other'], searchable: true },
   companies:    { values: ALL_COMPANIES, searchable: true },
   persons:      { values: ALL_PERSONS, searchable: true },
-  types:        { values: ['Problem','Request','Praise'], searchable: false },
-  companyTypes: { values: ['Enterprise','Mid-market','SMB'], searchable: false },
-  submitters:   { values: ALL_ROLES, searchable: false },
-  owners:       { values: FB_OWNERS, searchable: false },
-  operatingApps:{ values: FB_OPERATING_APPS, searchable: false },
-  appNames:     { values: FB_APP_NAMES, searchable: false },
+  types:        { values: ['Problem','Request','Praise'], searchable: true },
+  companyTypes: { values: ['Enterprise','Mid-market','SMB'], searchable: true },
+  submitters:   { values: ALL_ROLES, searchable: true },
+  owners:       { values: FB_OWNERS, searchable: true },
+  operatingApps:{ values: FB_OPERATING_APPS, searchable: true },
+  appNames:     { values: FB_APP_NAMES, searchable: true },
 }
 const ALL_FILTER_DEFS = [...PRIMARY_FILTERS, ...OTHER_FILTERS]
 
