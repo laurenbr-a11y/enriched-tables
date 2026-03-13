@@ -743,82 +743,69 @@ function EnrichStep({ onNext, onSkip }) {
   )
 }
 
+function MiroAppIcon() {
+  return (
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" rx="10" fill="#FFD02F"/>
+      <rect width="48" height="48" rx="10" fill="url(#miro-border)" fillOpacity="0.15"/>
+      <text x="24" y="34" textAnchor="middle" fontSize="28" fontWeight="800" fontFamily="serif" fill="#1A1A1A">m</text>
+      <defs>
+        <linearGradient id="miro-border" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#000" stopOpacity="0.05"/>
+          <stop offset="1" stopColor="#000" stopOpacity="0.18"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
+
 function EnrichConfirmView({ onNext, onSkip }) {
+  const [refreshDismissed, setRefreshDismissed] = useState(false)
   return (
     <>
-      <div className="enrich-icon-row">
-        <div className="enrich-spark-icon">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <circle cx="18" cy="18" r="18" fill="#EEF0FF"/>
-            <path d="M18 8l2.5 7h7.5l-6 4.5 2.5 7-6.5-4.5L11.5 26.5l2.5-7L8 15h7.5L18 8z" fill="#4262FF"/>
-          </svg>
-        </div>
-      </div>
+      <div className="enrich-miro-icon"><MiroAppIcon /></div>
       <h2 className="enrich-title">Enrich your backlog with Miro Insights</h2>
       <p className="enrich-desc">
-        Your imported items will automatically be enriched with customer intelligence — mentions, estimated revenue impact, company coverage, and more.
+        Your imported items will automatically be enriched with customer intelligence:
       </p>
-      <div className="enrich-col-tags">
-        {['Mentions', 'Customers', 'Est. Revenue', 'Companies'].map(c => (
-          <span key={c} className="enrich-col-tag">{c}</span>
-        ))}
-      </div>
-      <div className="enrich-refresh-note">
-        <span className="refresh-icon">↻</span>
-        <span>Data refreshes automatically as new insights flow in — no manual updates needed.</span>
-      </div>
+      <ul className="enrich-bullets">
+        <li>Mentions</li>
+        <li>Estimated revenue impact</li>
+        <li>Company coverage</li>
+        <li>& more.</li>
+      </ul>
+      {!refreshDismissed && (
+        <div className="enrich-callout">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{flexShrink:0,marginTop:1}}><circle cx="8" cy="8" r="7" stroke="#4262FF" strokeWidth="1.4"/><path d="M8 7v4M8 5.5v.5" stroke="#4262FF" strokeWidth="1.4" strokeLinecap="round"/></svg>
+          <div className="enrich-callout-body">
+            <div className="enrich-callout-title">Automatic refresh</div>
+            <div className="enrich-callout-text">Data refreshes automatically as new insights flow in — no manual updates needed.</div>
+          </div>
+          <button className="enrich-callout-close" onClick={() => setRefreshDismissed(true)}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="#888" strokeWidth="1.4" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+      )}
       <div className="enrich-actions">
-        <button className="btn-outline" onClick={onSkip}>Skip for now</button>
-        <button className="btn-primary enrich-cta" onClick={onNext}>Enable enrichment</button>
+        <button className="btn-primary enrich-cta" onClick={onNext}>Enable insights</button>
+        <button className="enrich-skip-link" onClick={onSkip}>Skip for now</button>
       </div>
     </>
   )
 }
 
 function InsightsUpsellView({ onMaybeLater }) {
-  const demoRows = [
-    { name: 'Login redesign', mentions: '47', rev: '$320K', co: '12' },
-    { name: 'API rate limits', mentions: '31', rev: '$180K', co: '8' },
-    { name: 'Dashboard filters', mentions: '24', rev: '$95K', co: '5' },
-  ]
   return (
     <>
-      <div className="enrich-icon-row">
-        <div className="enrich-spark-icon" style={{ background: '#F3EEFF' }}>
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <circle cx="18" cy="18" r="18" fill="#F3EEFF"/>
-            <path d="M18 8l2.5 7h7.5l-6 4.5 2.5 7-6.5-4.5L11.5 26.5l2.5-7L8 15h7.5L18 8z" fill="#7B5EA7"/>
-          </svg>
-        </div>
-      </div>
-      <div className="upsell-badge">Miro Insights · Add-on</div>
-      <h2 className="enrich-title">See which features customers need most</h2>
+      <div className="enrich-miro-icon"><MiroAppIcon /></div>
+      <div className="upsell-product-label">Miro Insights</div>
+      <h2 className="enrich-title enrich-title--large">Discover what customers need most</h2>
       <p className="enrich-desc">
         Miro Insights enriches your backlog with AI-powered customer signals — mentions, revenue at stake, and impacted accounts — so every priority call is evidence-based.
       </p>
-      <div className="upsell-demo-preview">
-        <div className="udp-frame">
-          <div className="udp-row udp-header">
-            <div className="udp-cell udp-name-col">Feature</div>
-            <div className="udp-cell udp-enriched-col">Mentions</div>
-            <div className="udp-cell udp-enriched-col">Est. Revenue</div>
-            <div className="udp-cell udp-enriched-col">Companies</div>
-          </div>
-          {demoRows.map((row, i) => (
-            <div key={i} className="udp-row">
-              <div className="udp-cell udp-name-col">{row.name}</div>
-              <div className={`udp-cell udp-enriched-col udp-fill udp-d${i}`}>{row.mentions}</div>
-              <div className={`udp-cell udp-enriched-col udp-fill udp-d${i + 3}`}>{row.rev}</div>
-              <div className={`udp-cell udp-enriched-col udp-fill udp-d${i + 6}`}>{row.co}</div>
-            </div>
-          ))}
-        </div>
-      </div>
       <div className="enrich-actions">
-        <button className="btn-outline" onClick={onMaybeLater}>Maybe later</button>
-        <a className="btn-primary enrich-cta" href="https://miro.com/contact/" target="_blank" rel="noreferrer">
-          Request demo →
-        </a>
+        <a className="btn-primary enrich-cta" href="https://miro.com/contact/" target="_blank" rel="noreferrer">Request demo</a>
+        <button className="enrich-skip-link" onClick={onMaybeLater}>Maybe later</button>
       </div>
     </>
   )
