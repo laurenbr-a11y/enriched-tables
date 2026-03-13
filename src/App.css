@@ -104,15 +104,10 @@
 
 /* Enriched table */
 .backlog-table.enriched .summary-col { max-width: 200px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.enriched-col { background: #f9f9ff !important; }
-.enriched-col--warn { background: #FFFBF0 !important; }
 .backlog-table.enriched th.enriched-col { background: #f0f2ff !important; color: #4262FF; }
 .enriched-col-indicator { display: inline-block; width: 6px; height: 6px; background: #4262FF; border-radius: 50%; margin-right: 4px; }
 .add-col { width: 40px; text-align: center; color: #bbb; cursor: pointer; }
-.enriched-cell-inner { display: inline-flex; align-items: center; gap: 3px; }
-.cell-warn-icon { flex-shrink: 0; display: inline-flex; align-items: center; }
-.cell-warn-icon-wrap { display: inline-flex; align-items: center; cursor: pointer; border-radius: 3px; padding: 1px; }
-.cell-warn-icon-wrap:hover { background: #fde8a0; }
+.backlog-table.enriched td.enriched-col { cursor: default; }
 .cell-readonly-tip { position: fixed; background: #fff; border: 1px solid #e0e0e0; border-radius: 5px; padding: 5px 10px; box-shadow: 0 3px 10px rgba(0,0,0,.11); z-index: 9999; font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; pointer-events: none; white-space: nowrap; font-weight: 500; }
 .status-tag { background: #f5f5f5; color: #555; padding: 2px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; }
 .status-done { background: #E3F9E5; color: #1A7A3C; }

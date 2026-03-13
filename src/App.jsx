@@ -858,7 +858,10 @@ function EnrichmentStart({ onNext }) {
 // ── SCREEN 7: Enriched table ─────────────────────────────────
 function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome, rows = tableRows, teamContext, onUpdateContext }) {
   const [panelRow, setPanelRow] = useState(null)
+  const [panelDefaultTab, setPanelDefaultTab] = useState('Details')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  const openPanel = (i, tab = 'Details') => { setPanelRow(i); setPanelDefaultTab(tab) }
 
   return (
     <div className="board-screen board-screen--v2">
@@ -874,8 +877,8 @@ function EnrichedTable({ onRestart, onGoRoadmap, spaceName, onGoHome, rows = tab
             <TeamContextButton teamContext={teamContext} onUpdateContext={onUpdateContext} />
           </div>
           <div className="table-panel-layout">
-            <EnrichedTableView enriching={false} onOpenPanel={setPanelRow} panelRow={panelRow} rows={rows} />
-            {panelRow !== null && <SidePanel row={rows[panelRow]} rowIndex={panelRow} onClose={() => setPanelRow(null)} />}
+            <EnrichedTableView enriching={false} onOpenPanel={openPanel} panelRow={panelRow} rows={rows} />
+            {panelRow !== null && <SidePanel row={rows[panelRow]} rowIndex={panelRow} defaultTab={panelDefaultTab} onClose={() => setPanelRow(null)} />}
           </div>
           <div className="restart-hint" onClick={onRestart}>↩ Restart prototype</div>
         </div>
@@ -1378,8 +1381,8 @@ function FeedbackDetail({ feedback, onBack }) {
 }
 
 // ── Side panel ───────────────────────────────────────────────
-function SidePanel({ row, onClose, rowIndex = 0 }) {
-  const [tab, setTab] = useState('Details')
+function SidePanel({ row, onClose, rowIndex = 0, defaultTab = 'Details' }) {
+  const [tab, setTab] = useState(defaultTab)
   const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [sort, setSort] = useState('newest')
 
@@ -1389,7 +1392,7 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
   const [selectedFeedback, setSelectedFeedback] = useState(null)
 
   // Reset tab and selected feedback whenever the displayed row changes
-  useEffect(() => { setTab('Details'); setSelectedFeedback(null) }, [row])
+  useEffect(() => { setTab(defaultTab); setSelectedFeedback(null) }, [row, defaultTab])
 
   const panelId = `PT-${300 + rowIndex}`
   const jiraId = `PT-${100 + rowIndex * 2}`
@@ -1747,26 +1750,12 @@ function EnrichedTableView({ enriching, onOpenPanel, panelRow, rows = tableRows 
   }
 
   const enrichedCell = (row, rowIdx, content) => {
-    const lowConf = row.panelMentions < 70
     return (
       <td
-        className={`enriched-col${lowConf ? ' enriched-col--warn' : ''}`}
-        onClick={showReadOnly}
+        className="enriched-col"
+        onDoubleClick={(e) => { e.stopPropagation(); onOpenPanel(rowIdx, 'Insights') }}
       >
-        {enriching ? <span className="loading-cell" /> : (
-          <span className="enriched-cell-inner">
-            {lowConf && (
-              <span
-                className="cell-warn-icon-wrap"
-                onClick={(e) => { e.stopPropagation(); onOpenPanel(rowIdx) }}
-                title="Low-confidence enrichment — click to view details"
-              >
-                <WarnTriangle />
-              </span>
-            )}
-            {content}
-          </span>
-        )}
+        {enriching ? <span className="loading-cell" /> : content}
       </td>
     )
   }
