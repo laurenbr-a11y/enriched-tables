@@ -980,6 +980,9 @@ const FB_SEGMENTS = ['Enterprise','Enterprise','Mid-market','Mid-market','SMB']
 const FB_CALL_PARTS = ['Zach Brown','Emily Johnson','Sarah Kim','Marcus Lee','Brent Taylor']
 const FB_INTERVIEW_CYCLES = ['Q1 2025','Q2 2025','Q3 2025','Q4 2024']
 const FB_DATES = ['1 week ago','2 weeks ago','3 weeks ago','1 month ago','6 weeks ago','2 months ago','3 months ago','4 months ago']
+const FB_OWNERS = ['Alex Chen','Jordan Lee','Casey Morgan','Taylor Kim','Sam Patel']
+const FB_OPERATING_APPS = ['iOS','Android','Web','Desktop']
+const FB_APP_NAMES = ['Miro','Miro Mobile','Miro Lite','Miro Desktop']
 
 function pick(arr, n) { return arr[n % arr.length] }
 function seededInt(seed, max) { return ((seed * 1664525 + 1013904223) & 0x7fffffff) % max }
@@ -1004,6 +1007,9 @@ function generateFeedback(rowSeed, count = 50) {
       segment: FB_SEGMENTS[seededInt(s+8, FB_SEGMENTS.length)],
       callParticipant: FB_CALL_PARTS[seededInt(s+9, FB_CALL_PARTS.length)],
       interviewCycle: FB_INTERVIEW_CYCLES[seededInt(s+10, FB_INTERVIEW_CYCLES.length)],
+      owner: FB_OWNERS[seededInt(s+11, FB_OWNERS.length)],
+      operatingApp: FB_OPERATING_APPS[seededInt(s+12, FB_OPERATING_APPS.length)],
+      appName: FB_APP_NAMES[seededInt(s+13, FB_APP_NAMES.length)],
     })
   }
   return items
@@ -1099,24 +1105,78 @@ function RowMenu({ rowIndex, onOpenPanel, onClose, onOpenComments, onOpenInsight
 
 // ── Feedback filter popover ───────────────────────────────────
 const ALL_COMPANIES = ['Apple','Google','Notion','Stripe','Figma','Linear','Vercel','Loom','Canva','Miro','Asana','Atlassian','Slack','Dropbox','Zapier','Intercom','HubSpot','Salesforce','Zendesk','Meta','ProductHunt','GitHub','GitLab','Postman','Retool','Monday','Basecamp','Trello','1Password','Alpha Industries']
+const ALL_PERSONS = FB_AUTHORS.map(([name]) => name)
 const ALL_ROLES = ['Product Manager','Engineer','Designer','Executive','Customer Success','Sales']
+
+const EMPTY_FILTERS = () => ({
+  sources: new Set(), companies: new Set(), persons: new Set(), types: new Set(),
+  companyTypes: new Set(), submitters: new Set(), owners: new Set(),
+  operatingApps: new Set(), appNames: new Set(),
+})
+
+const PRIMARY_FILTERS = [
+  { k: 'sources',   label: 'Source' },
+  { k: 'companies', label: 'Company' },
+  { k: 'persons',   label: 'Person' },
+  { k: 'types',     label: 'Type' },
+]
+const OTHER_FILTERS = [
+  { k: 'companyTypes',   label: 'Company Type' },
+  { k: 'submitters',     label: 'Submitter' },
+  { k: 'owners',         label: 'Owner' },
+  { k: 'operatingApps',  label: 'Operating App' },
+  { k: 'appNames',       label: 'App Name' },
+]
+const FILTER_VALUES = {
+  sources:      { values: ['Call','Ticket','Message','Other'], searchable: false },
+  companies:    { values: ALL_COMPANIES, searchable: true },
+  persons:      { values: ALL_PERSONS, searchable: true },
+  types:        { values: ['Problem','Request','Praise'], searchable: false },
+  companyTypes: { values: ['Enterprise','Mid-market','SMB'], searchable: false },
+  submitters:   { values: ALL_ROLES, searchable: false },
+  owners:       { values: FB_OWNERS, searchable: false },
+  operatingApps:{ values: FB_OPERATING_APPS, searchable: false },
+  appNames:     { values: FB_APP_NAMES, searchable: false },
+}
+const ALL_FILTER_DEFS = [...PRIMARY_FILTERS, ...OTHER_FILTERS]
+
+function FilterValueList({ filterKey, filters, onChange, onBack }) {
+  const [search, setSearch] = useState('')
+  const def = FILTER_VALUES[filterKey]
+  const label = ALL_FILTER_DEFS.find(f => f.k === filterKey).label
+  const toggle = (value) => {
+    const next = new Set(filters[filterKey])
+    next.has(value) ? next.delete(value) : next.add(value)
+    onChange({ ...filters, [filterKey]: next })
+  }
+  const visible = def.searchable
+    ? def.values.filter(v => v.toLowerCase().includes(search.toLowerCase()))
+    : def.values
+  return (
+    <>
+      <div className="fb-filter-back" onClick={onBack}>‹ {label}</div>
+      {def.searchable && (
+        <input className="fb-company-search" placeholder={`Search ${label.toLowerCase()}…`} value={search} onChange={e => setSearch(e.target.value)} autoFocus />
+      )}
+      <div className={def.searchable ? 'fb-company-list' : ''}>
+        {visible.map(v => (
+          <label key={v} className="fb-filter-check">
+            <input type="checkbox" checked={filters[filterKey].has(v)} onChange={() => toggle(v)} />
+            {v}
+          </label>
+        ))}
+      </div>
+    </>
+  )
+}
 
 function FeedbackFilter({ filters, onChange }) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState('main')
-  const [companySearch, setCompanySearch] = useState('')
-
-  const toggle = (key, value) => {
-    const next = new Set(filters[key])
-    next.has(value) ? next.delete(value) : next.add(value)
-    onChange({ ...filters, [key]: next })
-  }
 
   const activeCount = Object.values(filters).reduce((sum, s) => sum + s.size, 0)
-
-  const filteredCompanies = ALL_COMPANIES.filter(c =>
-    c.toLowerCase().includes(companySearch.toLowerCase())
-  )
+  const otherActiveCount = OTHER_FILTERS.reduce((sum, f) => sum + filters[f.k].size, 0)
+  const isValueView = ALL_FILTER_DEFS.some(f => f.k === view)
 
   return (
     <div className="fb-filter-wrap">
@@ -1128,8 +1188,8 @@ function FeedbackFilter({ filters, onChange }) {
         <div className="fb-filter-dropdown">
           {view === 'main' && (
             <>
-              <div className="fb-filter-heading">Filter by</div>
-              {[{k:'sources',label:'Source'},{k:'companies',label:'Company'},{k:'roles',label:'User Role'},{k:'others',label:'Other'}].map(f => (
+              <div className="fb-filter-heading">Select filters</div>
+              {PRIMARY_FILTERS.map(f => (
                 <div key={f.k} className="fb-filter-row" onClick={() => setView(f.k)}>
                   <span>{f.label}</span>
                   <div className="fb-filter-row-right">
@@ -1138,102 +1198,39 @@ function FeedbackFilter({ filters, onChange }) {
                   </div>
                 </div>
               ))}
+              <div className="fb-filter-row" onClick={() => setView('other')}>
+                <span>Other</span>
+                <div className="fb-filter-row-right">
+                  {otherActiveCount > 0 && <span className="fb-filter-active-count">{otherActiveCount}</span>}
+                  <span className="fb-chevron">›</span>
+                </div>
+              </div>
               {activeCount > 0 && (
-                <button className="fb-clear-btn" onClick={() => onChange({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })}>
-                  Clear all
-                </button>
+                <button className="fb-clear-btn" onClick={() => onChange(EMPTY_FILTERS())}>Clear all</button>
               )}
             </>
           )}
-          {view === 'sources' && (
-            <>
-              <div className="fb-filter-back" onClick={() => setView('main')}>‹ Source</div>
-              {['Call','Ticket','Message','Other'].map(s => (
-                <label key={s} className="fb-filter-check">
-                  <input type="checkbox" checked={filters.sources.has(s)} onChange={() => toggle('sources', s)} />
-                  {s}
-                </label>
-              ))}
-            </>
-          )}
-          {view === 'companies' && (
-            <>
-              <div className="fb-filter-back" onClick={() => setView('main')}>‹ Company</div>
-              <input className="fb-company-search" placeholder="Search companies…" value={companySearch} onChange={e => setCompanySearch(e.target.value)} autoFocus />
-              <div className="fb-company-list">
-                {filteredCompanies.map(c => (
-                  <label key={c} className="fb-filter-check">
-                    <input type="checkbox" checked={filters.companies.has(c)} onChange={() => toggle('companies', c)} />
-                    {c}
-                  </label>
-                ))}
-              </div>
-            </>
-          )}
-          {view === 'roles' && (
-            <>
-              <div className="fb-filter-back" onClick={() => setView('main')}>‹ User Role</div>
-              {ALL_ROLES.map(r => (
-                <label key={r} className="fb-filter-check">
-                  <input type="checkbox" checked={filters.roles.has(r)} onChange={() => toggle('roles', r)} />
-                  {r}
-                </label>
-              ))}
-            </>
-          )}
-          {view === 'others' && (
+          {view === 'other' && (
             <>
               <div className="fb-filter-back" onClick={() => setView('main')}>‹ Other</div>
-              {[
-                { label: 'Call participant', sub: 'others-cp', prefix: 'cp:' },
-                { label: 'Segment',          sub: 'others-seg', prefix: 'seg:' },
-                { label: 'Interview cycle',  sub: 'others-ic', prefix: 'ic:' },
-              ].map(f => {
-                const count = [...filters.others].filter(o => o.startsWith(f.prefix)).length
-                return (
-                  <div key={f.sub} className="fb-filter-row" onClick={() => setView(f.sub)}>
-                    <span>{f.label}</span>
-                    <div className="fb-filter-row-right">
-                      {count > 0 && <span className="fb-filter-active-count">{count}</span>}
-                      <span className="fb-chevron">›</span>
-                    </div>
+              {OTHER_FILTERS.map(f => (
+                <div key={f.k} className="fb-filter-row" onClick={() => setView(f.k)}>
+                  <span>{f.label}</span>
+                  <div className="fb-filter-row-right">
+                    {filters[f.k].size > 0 && <span className="fb-filter-active-count">{filters[f.k].size}</span>}
+                    <span className="fb-chevron">›</span>
                   </div>
-                )
-              })}
-            </>
-          )}
-          {view === 'others-cp' && (
-            <>
-              <div className="fb-filter-back" onClick={() => setView('others')}>‹ Call participant</div>
-              {FB_CALL_PARTS.map(p => (
-                <label key={p} className="fb-filter-check">
-                  <input type="checkbox" checked={filters.others.has('cp:'+p)} onChange={() => toggle('others', 'cp:'+p)} />
-                  {p}
-                </label>
+                </div>
               ))}
             </>
           )}
-          {view === 'others-seg' && (
-            <>
-              <div className="fb-filter-back" onClick={() => setView('others')}>‹ Segment</div>
-              {['Enterprise','Mid-market','SMB'].map(seg => (
-                <label key={seg} className="fb-filter-check">
-                  <input type="checkbox" checked={filters.others.has('seg:'+seg)} onChange={() => toggle('others', 'seg:'+seg)} />
-                  {seg}
-                </label>
-              ))}
-            </>
-          )}
-          {view === 'others-ic' && (
-            <>
-              <div className="fb-filter-back" onClick={() => setView('others')}>‹ Interview cycle</div>
-              {FB_INTERVIEW_CYCLES.map(ic => (
-                <label key={ic} className="fb-filter-check">
-                  <input type="checkbox" checked={filters.others.has('ic:'+ic)} onChange={() => toggle('others', 'ic:'+ic)} />
-                  {ic}
-                </label>
-              ))}
-            </>
+          {isValueView && (
+            <FilterValueList
+              filterKey={view}
+              filters={filters}
+              onChange={onChange}
+              onBack={() => setView(OTHER_FILTERS.some(f => f.k === view) ? 'other' : 'main')}
+            />
           )}
         </div>
       )}
@@ -1396,7 +1393,7 @@ function FeedbackDetail({ feedback, onBack }) {
 // ── Side panel ───────────────────────────────────────────────
 function SidePanel({ row, onClose, rowIndex = 0 }) {
   const [tab, setTab] = useState('Details')
-  const [filters, setFilters] = useState({ sources: new Set(), companies: new Set(), roles: new Set(), others: new Set() })
+  const [filters, setFilters] = useState(EMPTY_FILTERS)
   const [sort, setSort] = useState('newest')
 
   const [rejectingIdx, setRejectingIdx] = useState(new Set())
@@ -1443,15 +1440,13 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
     if (rejectedIdx.has(f._idx)) return false
     if (filters.sources.size > 0 && !filters.sources.has(f.source)) return false
     if (filters.companies.size > 0 && !filters.companies.has(f.company)) return false
-    if (filters.roles.size > 0 && !filters.roles.has(f.role)) return false
-    if (filters.others.size > 0) {
-      const cpMatch = [...filters.others].filter(o => o.startsWith('cp:')).map(o => o.slice(3))
-      const segMatch = [...filters.others].filter(o => o.startsWith('seg:')).map(o => o.slice(4))
-      const icMatch = [...filters.others].filter(o => o.startsWith('ic:')).map(o => o.slice(3))
-      if (cpMatch.length > 0 && !cpMatch.includes(f.callParticipant)) return false
-      if (segMatch.length > 0 && !segMatch.includes(f.segment)) return false
-      if (icMatch.length > 0 && !icMatch.includes(f.interviewCycle)) return false
-    }
+    if (filters.persons.size > 0 && !filters.persons.has(f.author)) return false
+    if (filters.types.size > 0 && !filters.types.has(f.type)) return false
+    if (filters.companyTypes.size > 0 && !filters.companyTypes.has(f.segment)) return false
+    if (filters.submitters.size > 0 && !filters.submitters.has(f.role)) return false
+    if (filters.owners.size > 0 && !filters.owners.has(f.owner)) return false
+    if (filters.operatingApps.size > 0 && !filters.operatingApps.has(f.operatingApp)) return false
+    if (filters.appNames.size > 0 && !filters.appNames.has(f.appName)) return false
     return true
   }).sort((a, b) => {
     const ai = DATE_ORDER.indexOf(a.date), bi = DATE_ORDER.indexOf(b.date)
@@ -1642,10 +1637,14 @@ function SidePanel({ row, onClose, rowIndex = 0 }) {
               </div>
               {activeFilterCount > 0 && (
                 <div className="sp-active-filters">
-                  {[...filters.sources].map(s => <span key={s} className="sp-filter-chip">Source: {s} <button onClick={() => { const n = new Set(filters.sources); n.delete(s); setFilters({...filters, sources: n}) }}>✕</button></span>)}
-                  {[...filters.companies].map(c => <span key={c} className="sp-filter-chip">Company: {c} <button onClick={() => { const n = new Set(filters.companies); n.delete(c); setFilters({...filters, companies: n}) }}>✕</button></span>)}
-                  {[...filters.roles].map(r => <span key={r} className="sp-filter-chip">Role: {r} <button onClick={() => { const n = new Set(filters.roles); n.delete(r); setFilters({...filters, roles: n}) }}>✕</button></span>)}
-                  {[...filters.others].map(o => { const label = o.startsWith('cp:') ? o.slice(3) : o.startsWith('seg:') ? o.slice(4) : o.slice(3); return <span key={o} className="sp-filter-chip">{label} <button onClick={() => { const n = new Set(filters.others); n.delete(o); setFilters({...filters, others: n}) }}>✕</button></span> })}
+                  {ALL_FILTER_DEFS.map(({ k, label }) =>
+                    [...filters[k]].map(v => (
+                      <span key={k+v} className="sp-filter-chip">
+                        {label}: {v}
+                        <button onClick={() => { const n = new Set(filters[k]); n.delete(v); setFilters({ ...filters, [k]: n }) }}>✕</button>
+                      </span>
+                    ))
+                  )}
                 </div>
               )}
               <div className="sp-feedback-list">
